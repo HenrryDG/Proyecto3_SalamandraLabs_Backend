@@ -41,7 +41,6 @@ INSTALLED_APPS = [
 
 
     #APPS CREADAS
-    'prueba',
     'Documentacion',
 
     #LIBRERIAS INSTALADAS

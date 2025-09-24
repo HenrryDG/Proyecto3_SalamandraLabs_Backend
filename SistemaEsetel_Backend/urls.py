@@ -26,7 +26,6 @@ from django.conf.urls.static import static
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    path('api/', include('prueba.urls')),
     path('api/', include('Documentacion.urls')),
 
     # Documentacion de la API
