@@ -42,6 +42,11 @@ INSTALLED_APPS = [
 
     #APPS CREADAS
     'Documentacion',
+    'apps.clientes',
+    'apps.documentos',
+    'apps.empleados',
+    'apps.plan_pagos',
+    'apps.prestamos',
 
     #LIBRERIAS INSTALADAS
     'rest_framework',
