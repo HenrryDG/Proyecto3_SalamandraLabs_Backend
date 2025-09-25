@@ -11,7 +11,15 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
 import os
+import pymysql
+from dotenv import load_dotenv
 from pathlib import Path
+
+
+pymysql.install_as_MySQLdb()
+load_dotenv()
+
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -92,10 +100,15 @@ WSGI_APPLICATION = 'SistemaEsetel_Backend.wsgi.app'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': os.getenv("DATABASE", "nombre_bd"),
+        'USER': os.getenv("USER", "usuario"),
+        'PASSWORD': os.getenv("PASSWORD", "contraseña"),
+        'HOST': os.getenv("HOST", "localhost"),
+        'PORT': os.getenv("PORT", "3306"),
     }
 }
+
 
 
 # Password validation
