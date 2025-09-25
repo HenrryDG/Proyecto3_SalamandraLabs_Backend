@@ -2,7 +2,7 @@ from django.db import models
 from django.contrib.auth.models import User
 
 class Empleado(models.Model):
-    user_id = models.OneToOneField(User, on_delete=models.CASCADE)
+    user = models.OneToOneField(User, on_delete=models.CASCADE)
     nombre = models.CharField(max_length=100)
     apellido_paterno = models.CharField(max_length=45)
     apellido_materno = models.CharField(max_length=30)
