@@ -27,6 +27,7 @@ from django.conf.urls.static import static
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('Documentacion.urls')),
+    path('api/', include('apps.empleados.urls')),
 
     # Documentacion de la API
      path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
