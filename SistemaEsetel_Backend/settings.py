@@ -14,6 +14,8 @@ import os
 import pymysql
 from dotenv import load_dotenv
 from pathlib import Path
+from datetime import timedelta
+from corsheaders.defaults import default_headers
 
 
 pymysql.install_as_MySQLdb()
@@ -57,14 +59,18 @@ INSTALLED_APPS = [
     'apps.prestamos',
 
     #LIBRERIAS INSTALADAS
+    'corsheaders',
     'rest_framework',
+    'rest_framework_simplejwt',
 ]
+
 
 REST_FRAMEWORK = {
     'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }  
 
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -107,6 +113,50 @@ DATABASES = {
         'HOST': os.getenv("HOST", "localhost"),
         'PORT': os.getenv("PORT", "3306"),
     }
+}
+
+CORS_ALLOWED_ORIGINS = [
+    os.getenv("FRONTEND_URL", "http://localhost:5173"),
+]
+
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    'X-Requested-With',
+    'Content-Type',
+    'Authorization',
+]
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+# CONFIGURACION JWT
+SIMPLE_JWT = {
+      'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+}
+
+SIMPLE_JWT = {
+    # Duración del token de acceso (ej: 60 minutos)
+    'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
+
+    # Duración del token de refresco (ej: 7 días)
+    'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
+
+    # --- Otras configuraciones opcionales ---
+
+    # Si quieres que los tokens de refresco roten (se emita uno nuevo cada vez que se usa)
+    'ROTATE_REFRESH_TOKENS': False, # Cambia a True si lo deseas
+
+    # Si quieres que el token de refresco antiguo se añada a la lista negra después de la rotación
+    # Requiere que 'rest_framework_simplejwt.token_blacklist' esté en INSTALLED_APPS
+    'BLACKLIST_AFTER_ROTATION': True,
+
+    # Algoritmo de firma
+    'ALGORITHM': 'HS256',
+
+    # Clave secreta (por defecto usa settings.SECRET_KEY)
+    # 'SIGNING_KEY': settings.SECRET_KEY,
+
+    # Clave en el payload que identifica al usuario (por defecto 'user_id')
+    'USER_ID_FIELD': 'id',
+    'USER_ID_CLAIM': 'user_id',
 }
 
 
