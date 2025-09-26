@@ -113,10 +113,10 @@ WSGI_APPLICATION = 'SistemaEsetel_Backend.wsgi.app'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': os.getenv("DATABASE", "nombre_bd"),
-        'USER': os.getenv("USER", "usuario"),
-        'PASSWORD': os.getenv("PASSWORD", "contraseña"),
-        'HOST': os.getenv("HOST", "localhost"),
+        'NAME': os.getenv("DATABASE", "b3d1bbn3exbpv6jc7fg0"),
+        'USER': os.getenv("USER", "unhls6uk8axhzd6s"),
+        'PASSWORD': os.getenv("PASSWORD", "bJ3S5W6PM10IT5OE4M8R"),
+        'HOST': os.getenv("HOST", "b3d1bbn3exbpv6jc7fg0-mysql.services.clever-cloud.com"),
         'PORT': os.getenv("PORT", "3306"),
     }
 }
