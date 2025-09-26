@@ -1,12 +1,8 @@
 from django.db import models
-from apps.prestamos.models import Prestamo
+from apps.solicitudes.models import SolicitudPrestamo
 
 class Documento(models.Model):
-    prestamo = models.ForeignKey(
-        Prestamo,
-        on_delete=models.PROTECT,
-        related_name='documentos'
-    )
+    solicitud = models.ForeignKey(SolicitudPrestamo, on_delete=models.PROTECT, related_name='documentos')
     tipo_documento = models.CharField(max_length=30)
     archivo = models.JSONField(null=True, blank=True)
     verificado = models.BooleanField(default=False)   
@@ -18,4 +14,4 @@ class Documento(models.Model):
         db_table = 'documentos'
 
     def __str__(self):
-        return f"{self.tipo_documento} - Prestamo {self.prestamo.id}"
+        return f"{self.tipo_documento} - Solicitud {self.solicitud.id}"

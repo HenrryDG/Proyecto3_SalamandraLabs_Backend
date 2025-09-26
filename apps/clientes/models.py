@@ -10,7 +10,7 @@ class Cliente(models.Model):
     ingreso_mensual = models.DecimalField(max_digits=12, decimal_places=2)
     direccion = models.CharField(max_length=255)
     correo = models.CharField(max_length=50, null=True, blank=True)
-    telefono = models.BigIntegerField()
+    telefono = models.BigIntegerField(unique=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
