@@ -9,14 +9,14 @@ class ClienteSerializer(serializers.ModelSerializer):
         read_only_fields = ['id', 'created_at', 'updated_at']
     
     def validate_telefono(self, value):
-        if not re.match(r'^[67]\d{7}$', value):
+        value_str = str(value)
+        if not re.match(r'^[67]\d{7}$', value_str):
             raise serializers.ValidationError(
                 "El teléfono debe tener 8 dígitos y comenzar con 6 o 7."
             )
         cliente_id = self.instance.id if self.instance else None
         if Cliente.objects.filter(telefono=value).exclude(id=cliente_id).exists():
             raise serializers.ValidationError("Este teléfono ya está registrado.")
-        
         return value
     
     def validate_carnet(self, value):
