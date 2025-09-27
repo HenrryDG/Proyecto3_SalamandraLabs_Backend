@@ -12,11 +12,8 @@ def cliente_collection(request):
         try:
             clientes = Cliente.objects.all()          
             serializer = ClienteSerializer(clientes, many=True)
-            return Response({
-                'mensaje': 'Clientes recuperados exitosamente',
-                'total_clientes': clientes.count(),
-                'data': serializer.data
-            }, status=200)
+            return Response(serializer.data, status=200)
+
         except Exception as e:
             return Response({
                 'mensaje': 'Error al recuperar los clientes',
@@ -29,10 +26,7 @@ def cliente_collection(request):
         if serializer.is_valid():
             try:
                 cliente = serializer.save()
-                return Response({
-                    'mensaje': 'Cliente creado exitosamente',
-                    'data': serializer.data
-                }, status=201)
+                return Response(serializer.data, status=201)
             except Exception as e:
                 return Response({
                     'mensaje': 'Error al crear el cliente',
@@ -58,10 +52,7 @@ def cliente_element(request, pk):
     if request.method == 'GET':
         try:
             serializer = ClienteSerializer(cliente)
-            return Response({
-                'mensaje': 'Cliente recuperado exitosamente',
-                'data': serializer.data
-            }, status=200)
+            return Response(serializer.data, status=200)
         except Exception as e:
             return Response({
                 'mensaje': 'Error al procesar los datos del cliente',
@@ -74,10 +65,7 @@ def cliente_element(request, pk):
         if serializer.is_valid():
             try:
                 serializer.save()
-                return Response({
-                    'mensaje': 'Cliente actualizado exitosamente',
-                    'data': serializer.data
-                }, status=200)
+                return Response(serializer.data, status=200)
             except Exception as e:
                 return Response({
                     'mensaje': 'Error al guardar los cambios del cliente',
