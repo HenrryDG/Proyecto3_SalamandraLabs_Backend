@@ -3,6 +3,15 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.permissions import IsAuthenticated
 from .models import Cliente
 from .serializers import ClienteSerializer
+from drf_spectacular.utils import extend_schema
+
+
+@extend_schema(
+    methods=["POST"],
+    request=ClienteSerializer,
+    responses={201: ClienteSerializer},
+)
+
 
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
@@ -37,6 +46,12 @@ def cliente_collection(request):
             'errores': serializer.errors
         }, status=400)
 
+
+@extend_schema(
+    methods=["PUT"],
+    request=ClienteSerializer,
+    responses={200: ClienteSerializer},
+)
 @api_view(['GET', 'PUT', 'DELETE'])
 @permission_classes([IsAuthenticated])
 def cliente_element(request, pk):
