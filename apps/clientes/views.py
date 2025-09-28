@@ -52,7 +52,7 @@ def cliente_collection(request):
     request=ClienteSerializer,
     responses={200: ClienteSerializer},
 )
-@api_view(['GET', 'PUT', 'DELETE'])
+@api_view(['GET', 'PUT', 'DELETE', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def cliente_element(request, pk):
     try:
@@ -104,3 +104,30 @@ def cliente_element(request, pk):
                 'mensaje': 'Error al eliminar el cliente',
                 'detalles': str(e)
             }, status=500)
+
+    # Realizar la eliminación lógica del cliente
+    elif request.method == 'PATCH':
+        try:
+            cliente = Cliente.objects.get(pk=pk)
+            # Alternar estado
+            cliente.activo = not cliente.activo
+            cliente.save()
+
+            mensaje = "Cliente deshabilitado exitosamente" if not cliente.activo else "Cliente habilitado exitosamente"
+
+            return Response({
+                "mensaje": mensaje,
+                "cliente_id": pk,
+                "estado": cliente.activo
+            }, status=200)
+        except Cliente.DoesNotExist:
+            return Response({
+                "mensaje": "Cliente no encontrado"
+            }, status=404)
+        except Exception as e:
+            return Response({
+                "mensaje": "Error al actualizar el estado del cliente",
+                "detalles": str(e)
+            }, status=500)
+    
+    

@@ -11,6 +11,7 @@ class Cliente(models.Model):
     direccion = models.CharField(max_length=255)
     correo = models.CharField(max_length=50, null=True, blank=True)
     telefono = models.BigIntegerField(unique=True)
+    activo = models.BooleanField(default=True)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
