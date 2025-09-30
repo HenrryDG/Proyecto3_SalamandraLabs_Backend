@@ -3,9 +3,9 @@ from apps.prestamos.models import Prestamo
 
 class PlanPago(models.Model):
     prestamo = models.ForeignKey(Prestamo, on_delete=models.PROTECT, related_name='plan_pagos')
-    fecha_pago = models.DateField()
+    fecha_pago = models.DateField(null=True, blank=True)
     fecha_vencimiento = models.DateField()
-    metodo_pago = models.CharField(max_length=45)
+    metodo_pago = models.CharField(max_length=45, null=True, blank=True)
     monto_cuota = models.DecimalField(max_digits=12, decimal_places=2)
     mora_cuota = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
     estado = models.CharField(max_length=30, choices=[
