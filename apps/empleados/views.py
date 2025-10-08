@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Empleado
 from .serializers import EmpleadoSerializer
 from drf_spectacular.utils import extend_schema
+from django.contrib.auth.models import User
 
 
 @api_view(['GET'])
@@ -23,4 +24,23 @@ def empleado_profile(request):
             'mensaje': 'Error al recuperar el perfil del empleado',
             'error': str(e)
         }, status=500)
+@extend_schema(
+    methods=["POST"],
+    request=EmpleadoSerializer,
+    responses={201: EmpleadoSerializer},
+)
+@api_view(['GET', 'POST'])
+@permission_classes([IsAuthenticated])
+def empleado_collection(request):
+    #GET - Listar todos los empleados
+    if request.method == 'GET':
+        try:
+            empleados = Empleado.objects.all()          
+            serializer = EmpleadoSerializer(empleados, many=True)
+            return Response(serializer.data, status=200)
+        except Exception as e:
+            return Response({
+                'mensaje': 'Error al recuperar los empleados',
+                'error': str(e)
+            }, status=500)
     
