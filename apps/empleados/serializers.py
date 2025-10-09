@@ -4,7 +4,10 @@ import re
 from django.contrib.auth.models import User
 
 class EmpleadoSerializer(serializers.ModelSerializer):
-    user = serializers.StringRelatedField()
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True, style={'input_type': 'password'})
+    user = serializers.StringRelatedField(read_only=True)
+    correo = serializers.EmailField(required=False, allow_null=True, allow_blank=True)
 
     class Meta:
         model = Empleado
