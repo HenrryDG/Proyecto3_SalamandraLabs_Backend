@@ -61,3 +61,30 @@ def empleado_collection(request):
             'errores': serializer.errors
         }, status=400)
     
+@extend_schema(
+    methods=["PUT", "PATCH"],
+    request=EmpleadoSerializer,
+    responses={200: EmpleadoSerializer},
+)
+@api_view(['GET', 'PUT', 'PATCH'])
+@permission_classes([IsAuthenticated])
+def empleado_element(request, pk):
+    try:
+        empleado = Empleado.objects.get(pk=pk)
+    except Empleado.DoesNotExist:
+        return Response({
+            'mensaje': 'Empleado no encontrado',
+            'error': 'El empleado con el ID proporcionado no existe'
+        }, status=404)
+    
+    # GET - Obtener un empleado específico
+    if request.method == 'GET':
+        try:
+            serializer = EmpleadoSerializer(empleado)
+            return Response(serializer.data, status=200)
+        except Exception as e:
+            return Response({
+                'mensaje': 'Error al procesar los datos del empleado',
+                'detalles': str(e)
+            }, status=500)
+    
