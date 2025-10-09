@@ -43,4 +43,21 @@ def empleado_collection(request):
                 'mensaje': 'Error al recuperar los empleados',
                 'error': str(e)
             }, status=500)
+            
+            # POST - Crear un nuevo empleado
+    elif request.method == 'POST':
+        serializer = EmpleadoSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
+                empleado = serializer.save()
+                return Response(serializer.data, status=201)
+            except Exception as e:
+                return Response({
+                    'mensaje': 'Error al crear el empleado',
+                    'error': str(e)
+                }, status=500)
+        return Response({
+            'mensaje': 'Error en los datos proporcionados',
+            'errores': serializer.errors
+        }, status=400)
     
