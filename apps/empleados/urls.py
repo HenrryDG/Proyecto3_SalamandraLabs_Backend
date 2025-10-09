@@ -10,5 +10,6 @@ urlpatterns = [
 
     # Rutas RESTful
     path('empleados/perfil/', views.empleado_profile, name='empleado-profile'),
-
+    path('empleados/', views.empleado_collection, name='empleado-collection'),
+    path('empleados/<int:pk>/', views.empleado_element, name='empleado-element'),
 ]
