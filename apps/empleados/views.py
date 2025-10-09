@@ -87,4 +87,21 @@ def empleado_element(request, pk):
                 'mensaje': 'Error al procesar los datos del empleado',
                 'detalles': str(e)
             }, status=500)
+
+# PUT - Actualizar datos
+    elif request.method == 'PUT':
+        serializer = EmpleadoSerializer(empleado, data=request.data, partial=True)
+        if serializer.is_valid():
+            try:
+                serializer.save()
+                return Response(serializer.data, status=200)
+            except Exception as e:
+                return Response({
+                    'mensaje': 'Error al guardar los cambios del empleado',
+                    'detalles': str(e)
+                }, status=500)
+        return Response({
+            'mensaje': 'Error en los datos proporcionados para actualizar',
+            'errores': serializer.errors
+        }, status=400)
     
