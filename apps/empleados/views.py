@@ -104,4 +104,26 @@ def empleado_element(request, pk):
             'mensaje': 'Error en los datos proporcionados para actualizar',
             'errores': serializer.errors
         }, status=400)
+    # PATCH - Alternar estado activo/inactivo
+    elif request.method == 'PATCH':
+        try:
+            # Alternar el estado del empleado
+            empleado.activo = not empleado.activo
+            empleado.save()
+            # Sincronizar con el usuario
+            empleado.user.is_active = empleado.activo
+            empleado.user.save()
+
+            mensaje = "Empleado desactivado exitosamente" if not empleado.activo else "Empleado activado exitosamente"
+
+            return Response({
+                "mensaje": mensaje,
+                "empleado_id": pk,
+                "estado": empleado.activo
+            }, status=200)
+        except Exception as e:
+            return Response({
+                'mensaje': 'Error al modificar el estado del empleado',
+                'detalles': str(e)
+            }, status=500)
     
