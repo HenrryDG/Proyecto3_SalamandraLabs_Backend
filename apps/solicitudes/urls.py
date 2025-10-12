@@ -1,0 +1,7 @@
+from django.urls import path
+from . import views
+
+urlpatterns = [
+    # Rutas RESTful
+    path('solicitudes/', views.solicitud_collection, name='solicitud-collection'),  # GET (listar) y POST (crear)
+]
