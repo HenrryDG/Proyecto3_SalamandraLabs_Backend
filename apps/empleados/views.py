@@ -88,7 +88,7 @@ def empleado_element(request, pk):
                 'detalles': str(e)
             }, status=500)
 
-# PUT - Actualizar datos
+    # PUT - Actualizar datos
     elif request.method == 'PUT':
         serializer = EmpleadoSerializer(empleado, data=request.data, partial=True)
         if serializer.is_valid():
@@ -104,6 +104,7 @@ def empleado_element(request, pk):
             'mensaje': 'Error en los datos proporcionados para actualizar',
             'errores': serializer.errors
         }, status=400)
+    
     # PATCH - Alternar estado activo/inactivo
     elif request.method == 'PATCH':
         try:
