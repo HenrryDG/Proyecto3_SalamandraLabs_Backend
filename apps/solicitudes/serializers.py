@@ -12,12 +12,6 @@ class SolicitudSerializer(serializers.ModelSerializer):
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at', 'empleado_nombre', 'cliente_nombre']
 
-
-    class Meta:
-        model = SolicitudPrestamo
-        fields = '__all__'
-        read_only_fields = ['id', 'created_at', 'updated_at']
-
     def validate_monto_solicitado(self, value):
         if value <= 0:
             raise serializers.ValidationError(
@@ -26,7 +20,7 @@ class SolicitudSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        required_fields = ['empleado', 'cliente', 'monto_solicitado', 'proposito', 'plazo_meses']
+        required_fields = ['cliente', 'monto_solicitado', 'proposito', 'plazo_meses']
         for field in required_fields:
             if not data.get(field):
                 raise serializers.ValidationError(f"El campo '{field}' es requerido.")
