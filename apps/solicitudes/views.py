@@ -25,10 +25,13 @@ def solicitud_collection(request):
     # Listar todas las solicitudes
     if request.method == "GET":
         try:
-            solicitudes = SolicitudPrestamo.objects.all()
+            empleado_logueado = request.user.empleado
+            if empleado_logueado.rol == "Administrador":
+                solicitudes = SolicitudPrestamo.objects.all()
+            else:
+                solicitudes = SolicitudPrestamo.objects.filter(empleado=empleado_logueado)
             serializer = SolicitudSerializer(solicitudes, many=True)
             return Response(serializer.data, status=200)
-
         except Exception as e:
             return Response(
                 {"mensaje": "Error al recuperar las solicitudes", "error": str(e)},
