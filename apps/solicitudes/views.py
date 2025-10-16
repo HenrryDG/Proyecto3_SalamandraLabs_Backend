@@ -133,9 +133,8 @@ def solicitud_element(request, pk):
                 )
 
             solicitud.estado = nuevo_estado
-            # Si se aprueba, registrar la fecha actual
-            if nuevo_estado == "Aprobada":
-                solicitud.fecha_aprobacion = timezone.now().date()
+
+            solicitud.fecha_aprobacion = timezone.now().date()
             solicitud.save()
 
             return Response(
