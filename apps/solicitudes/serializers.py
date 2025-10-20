@@ -1,6 +1,6 @@
 from rest_framework import serializers
 from .models import SolicitudPrestamo
-import re
+
 
 class SolicitudSerializer(serializers.ModelSerializer):
     # Este se usa solo para mostrar el nombre (lectura)
