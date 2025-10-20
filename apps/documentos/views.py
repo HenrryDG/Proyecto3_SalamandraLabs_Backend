@@ -15,9 +15,9 @@ from .utils import limpiar_texto, extraer_direccion_ocr
 
 @api_view(["GET"])
 #@permission_classes([IsAuthenticated])
-def documento_collection(request):
+def documento_collection(request, solicitud_id):
     try:
-        documentos = Documento.objects.all()
+        documentos = Documento.objects.filter(solicitud_id=solicitud_id)
         serializer = DocumentoSerializer(documentos, many=True)
         return Response(serializer.data, status=200)
     except Exception as e:
@@ -25,7 +25,6 @@ def documento_collection(request):
             {"mensaje": "Error al recuperar los documentos", "error": str(e)},
             status=500,
         )
-    
 
 @api_view(["POST"])
 def verificar_carnet(request):
