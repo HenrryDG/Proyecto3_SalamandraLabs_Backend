@@ -32,7 +32,7 @@ class ClienteSerializer(serializers.ModelSerializer):
         return value
     
     def validate(self, data):
-        required_fields = ['carnet', 'nombre', 'apellido_paterno', 'apellido_materno','direccion', 
+        required_fields = ['carnet', 'nombre','direccion', 
         'lugar_trabajo', 'tipo_trabajo', 'ingreso_mensual', 'direccion','telefono']
         for field in required_fields:
             if not data.get(field):  

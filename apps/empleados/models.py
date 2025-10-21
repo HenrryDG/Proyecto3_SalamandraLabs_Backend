@@ -5,8 +5,8 @@ from django.contrib.auth.models import User
 class Empleado(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="empleado")
     nombre = models.CharField(max_length=100)
-    apellido_paterno = models.CharField(max_length=45)
-    apellido_materno = models.CharField(max_length=30)
+    apellido_paterno = models.CharField(max_length=45, null=True, blank=True)
+    apellido_materno = models.CharField(max_length=30, null=True, blank=True)
     correo = models.CharField(max_length=30, null=True, blank=True)
     telefono = models.BigIntegerField(unique=True)
     rol = models.CharField(max_length=30)

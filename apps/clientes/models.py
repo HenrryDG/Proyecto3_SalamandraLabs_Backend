@@ -3,8 +3,8 @@ from django.db import models
 class Cliente(models.Model):
     carnet = models.CharField(max_length=12, unique=True)
     nombre = models.CharField(max_length=30)
-    apellido_paterno = models.CharField(max_length=30)
-    apellido_materno = models.CharField(max_length=30)
+    apellido_paterno = models.CharField(max_length=30, null=True, blank=True)
+    apellido_materno = models.CharField(max_length=30, null=True, blank=True)
     lugar_trabajo = models.CharField(max_length=60)
     tipo_trabajo = models.CharField(max_length=30)
     ingreso_mensual = models.DecimalField(max_digits=12, decimal_places=2)

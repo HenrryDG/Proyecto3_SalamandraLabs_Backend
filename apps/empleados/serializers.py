@@ -44,7 +44,7 @@ class EmpleadoSerializer(serializers.ModelSerializer):
     
     # Validar campos requeridos
     def validate(self, data):
-        required_fields = ['nombre', 'apellido_paterno', 'apellido_materno', 'telefono', 'rol']
+        required_fields = ['nombre', 'telefono', 'rol']
         for field in required_fields:
             if not data.get(field):  
                 raise serializers.ValidationError(f"El campo {field} es requerido.")
