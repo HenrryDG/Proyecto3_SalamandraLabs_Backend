@@ -102,7 +102,7 @@ def verificar_direccion(request):
         partes_cliente = set(direccion_cliente.split())
         partes_ocr = set(direccion_ocr.split())
 
-        # 3 Calcular similitud con Jaccard
+        # 3 Calcular similitud
         interseccion = partes_cliente & partes_ocr
         union = partes_cliente | partes_ocr
         similitud = len(interseccion) / len(union) if union else 0
