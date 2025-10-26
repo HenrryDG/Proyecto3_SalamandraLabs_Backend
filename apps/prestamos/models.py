@@ -7,8 +7,7 @@ class Prestamo(models.Model):
     monto_restante = models.DecimalField(max_digits=12, decimal_places=2)
     interes = models.DecimalField(max_digits=5, decimal_places=2)
     fecha_desembolso = models.DateField(null=True, blank=True)
-    fecha_plazo = models.DateField(null=True, blank=True) 
-    frecuencia_pagos = models.IntegerField()
+    fecha_plazo = models.DateField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=[
         ('En Curso', 'En Curso'), 
         ('Mora', 'Mora'), 
