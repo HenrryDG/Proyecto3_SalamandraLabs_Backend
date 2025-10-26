@@ -1,7 +1,8 @@
 from django.db import models
 
 class Cliente(models.Model):
-    carnet = models.CharField(max_length=12, unique=True)
+    carnet = models.CharField(max_length=12)
+    complemento = models.CharField(max_length=2, null=True, blank=True)
     nombre = models.CharField(max_length=30)
     apellido_paterno = models.CharField(max_length=30, null=True, blank=True)
     apellido_materno = models.CharField(max_length=30, null=True, blank=True)
@@ -18,6 +19,9 @@ class Cliente(models.Model):
 
     class Meta:
         db_table = 'clientes'
+        constraints = [ 
+            models.UniqueConstraint(fields=['carnet', 'complemento'], name='unique_carnet_complemento')
+        ]
 
     def __str__(self):
         return f"{self.nombre} {self.apellido_paterno} {self.apellido_materno}"

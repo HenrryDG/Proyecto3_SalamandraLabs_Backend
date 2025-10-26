@@ -40,13 +40,28 @@ class ClienteSerializer(serializers.ModelSerializer):
         return value
 
     def validate_carnet(self, value):
+        complemento = self.initial_data.get("complemento")  # se obtiene del request
+        cliente_id = self.instance.id if self.instance else None
+
+        # Validar formato básico
         if not re.match(r"^\d{5,10}$", value):
             raise serializers.ValidationError(
                 "El carnet debe tener entre 5 y 10 dígitos."
             )
-        cliente_id = self.instance.id if self.instance else None
-        if Cliente.objects.filter(carnet=value).exclude(id=cliente_id).exists():
-            raise serializers.ValidationError("Este carnet ya está registrado.")
+
+        # Construir carnet completo (por ejemplo: '123456-AB')
+        carnet_completo = f"{value}-{complemento}" if complemento else value
+
+        # Buscar coincidencias según ambos campos
+        existe = Cliente.objects.filter(
+            carnet=value,
+            complemento=complemento or None
+        ).exclude(id=cliente_id).exists()
+
+        if existe:
+            raise serializers.ValidationError(
+                f"El carnet {carnet_completo} ya está registrado."
+            )
 
         return value
 

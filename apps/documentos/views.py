@@ -33,7 +33,7 @@ def verificar_carnet(request):
       - texto: texto OCR
       - solicitud_id: id de la solicitud
       - tipo_documento (opcional, default 'DNI')
-    Crea o actualiza un Documento según si coincide el carnet del cliente.
+    Crea o actualiza un Documento según si coincide el carnet (y complemento) del cliente.
     """
     texto = request.data.get("texto", "")
     solicitud_id = request.data.get("solicitud_id")
@@ -44,8 +44,11 @@ def verificar_carnet(request):
         solicitud = SolicitudPrestamo.objects.get(id=solicitud_id)
         cliente = solicitud.cliente
 
-        # Comparar texto OCR con carnet del cliente
-        verificado = cliente.carnet in texto
+        # Construir el carnet completo (ej: 123456-AB o 123456)
+        carnet_completo = f"{cliente.carnet}-{cliente.complemento}" if cliente.complemento else cliente.carnet
+
+        # Comparar texto OCR con carnet completo o solo carnet (por seguridad)
+        verificado = carnet_completo in texto or cliente.carnet in texto
 
         # Buscar documento existente
         documento, creado = Documento.objects.get_or_create(
@@ -54,10 +57,10 @@ def verificar_carnet(request):
             defaults={
                 "verificado": verificado,
                 "archivo": None,
-            },  # archivo se puede actualizar si se envía
+            },
         )
 
-        # Si ya existía, actualizamos verificado
+        # Si ya existía, actualizamos el estado de verificado
         if not creado:
             documento.verificado = verificado
             documento.save()
@@ -73,6 +76,10 @@ def verificar_carnet(request):
                 "solicitud_id": documento.solicitud.id,
             }
         )
+
+    except SolicitudPrestamo.DoesNotExist:
+        return Response({"error": "Solicitud no encontrada."}, status=404)
+
 
     except SolicitudPrestamo.DoesNotExist:
         return Response({"error": "Solicitud no encontrada"}, status=404)

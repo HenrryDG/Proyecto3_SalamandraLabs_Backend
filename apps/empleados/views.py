@@ -108,6 +108,12 @@ def empleado_element(request, pk):
     # PATCH - Alternar estado activo/inactivo
     elif request.method == 'PATCH':
         try:
+            # Evitar que el usuario con la sesión iniciada se deshabilite a sí mismo
+            if empleado.user == request.user and empleado.activo:
+                return Response({
+                    'mensaje': 'No puedes deshabilitar al empleado con la sesión iniciada'
+                }, status=403)
+
             # Alternar el estado del empleado
             empleado.activo = not empleado.activo
             empleado.save()
@@ -115,7 +121,7 @@ def empleado_element(request, pk):
             empleado.user.is_active = empleado.activo
             empleado.user.save()
 
-            mensaje = "Empleado desactivado exitosamente" if not empleado.activo else "Empleado activado exitosamente"
+            mensaje = "Empleado deshabilitado exitosamente" if not empleado.activo else "Empleado habilitado exitosamente"
 
             return Response({
                 "mensaje": mensaje,
