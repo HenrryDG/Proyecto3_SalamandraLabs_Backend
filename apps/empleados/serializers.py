@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from .models import Empleado
+from apps.clientes.models import Cliente
 import re
 from django.contrib.auth.models import User
 
@@ -13,18 +14,32 @@ class EmpleadoSerializer(serializers.ModelSerializer):
         model = Empleado
         fields = '__all__'
         read_only_fields = ['id', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'telefono': {'validators': []},
+        }
 
-# Validar formato de teléfono
+    # Validar formato de teléfono
     def validate_telefono(self, value):
         value_str = str(value)
         if not re.match(r'^[67]\d{7}$', value_str):
             raise serializers.ValidationError(
                 "El teléfono debe tener 8 dígitos y comenzar con 6 o 7."
             )
+        
         empleado_id = self.instance.id if self.instance else None
-        if Empleado.objects.filter(telefono=value).exclude(id=empleado_id).exists():
+
+        # Verifica si ya existe en empleados (excepto el actual)
+        existe_en_empleado = Empleado.objects.filter(telefono=value).exclude(id=empleado_id).exists()
+
+        # Verifica si ya existe en clientes
+        existe_en_cliente = Cliente.objects.filter(telefono=value).exists()
+
+        if existe_en_empleado or existe_en_cliente:
             raise serializers.ValidationError("Este teléfono ya está registrado.")
+
         return value
+
+
     
     # Validar formato de correo electrónico
     def validate_correo(self, value):
