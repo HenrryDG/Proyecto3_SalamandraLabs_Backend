@@ -22,8 +22,6 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 
-
-
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/', include('Documentacion.urls')),
@@ -31,6 +29,7 @@ urlpatterns = [
     path('api/', include('apps.clientes.urls')),
     path('api/', include('apps.solicitudes.urls')),
     path('api/', include('apps.documentos.urls')),
+    path('api/', include('apps.prestamos.urls')),
 
     # Documentacion de la API
      path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
@@ -40,8 +39,7 @@ urlpatterns = [
         'api/schema/swagger-ui/',
         SpectacularSwaggerView.as_view(url_name='schema', template_name='swagger-ui.html'),
         name='swagger-ui'
-    ),
-   
+    ), 
 ]
 
 urlpatterns += static(settings.STATIC_URL, document_root=settings.STATIC_ROOT)
