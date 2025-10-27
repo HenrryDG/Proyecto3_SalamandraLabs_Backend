@@ -45,3 +45,34 @@ class PrestamoSerializer(serializers.ModelSerializer):
             if not data.get(field):
                 raise serializers.ValidationError(f"El campo '{field}' es requerido.")
         return data
+    
+    def create(self, validated_data):
+      solicitud = validated_data['solicitud']
+      monto_aprobado = validated_data['monto_aprobado']
+      interes = validated_data['interes']
+      fecha_desembolso = validated_data['fecha_desembolso']
+
+      # Calcular monto restante e intereses
+      monto_restante = monto_aprobado * (1 + (interes / 100))
+      validated_data['monto_restante'] = monto_restante
+      validated_data['estado'] = 'En Curso'
+
+      # Calcular fecha de plazo total
+      fecha_plazo = fecha_desembolso + relativedelta(months=solicitud.plazo_meses)
+      validated_data['fecha_plazo'] = fecha_plazo
+
+      # Guardar préstamo
+      prestamo = super().create(validated_data)
+
+      # Crear el plan de pagos
+      monto_cuota = monto_restante / solicitud.plazo_meses
+      for i in range(solicitud.plazo_meses):
+          fecha_vencimiento = fecha_desembolso + relativedelta(months=i+1)
+          PlanPago.objects.create(
+              prestamo=prestamo,
+              fecha_vencimiento=fecha_vencimiento,
+              monto_cuota=monto_cuota,
+              mora_cuota=0.00,
+              estado='Pendiente'
+          )
+      return prestamo
