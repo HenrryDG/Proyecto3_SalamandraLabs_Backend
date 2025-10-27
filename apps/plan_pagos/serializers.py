@@ -4,4 +4,5 @@ from .models import PlanPago
 class PlanPagoSerializer(serializers.ModelSerializer):
     class Meta:
         model = PlanPago
-        fields = '_all_'
+        fields = '__all__'
+
