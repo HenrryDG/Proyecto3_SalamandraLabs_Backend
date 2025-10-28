@@ -4,6 +4,7 @@ from rest_framework.permissions import IsAuthenticated
 from .models import Cliente
 from .serializers import ClienteSerializer
 from drf_spectacular.utils import extend_schema
+from django.db.models import Q
 
 
 @extend_schema(
@@ -45,6 +46,31 @@ def cliente_collection(request):
             'mensaje': 'Error en los datos proporcionados',
             'errores': serializer.errors
         }, status=400)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def clientes_habilitados(request):
+    try:
+        clientes = (
+            Cliente.objects.filter(
+                Q(solicitudes__prestamo__estado="Completado") |
+                Q(solicitudes__estado="Rechazada") |
+                Q(solicitudes__isnull=True)
+            )
+            .distinct()
+        )
+
+        serializer = ClienteSerializer(clientes, many=True)
+        return Response(serializer.data, status=200)
+    except Exception as e:
+        return Response(
+            {
+                "mensaje": "Error al recuperar los clientes filtrados",
+                "error": str(e),
+            },
+            status=500,
+        )
 
 
 @extend_schema(

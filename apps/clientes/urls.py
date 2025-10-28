@@ -5,4 +5,6 @@ urlpatterns = [
     # Rutas RESTful 
     path('clientes/', views.cliente_collection, name='cliente-collection'),  # GET (listar) y POST (crear)
     path('clientes/<int:pk>/', views.cliente_element, name='cliente-element'),  # GET (obtener), PUT (actualizar) y DELETE (eliminar)
+    # Clientes con préstamo 'Completado' y/o solicitud 'Rechazada'
+    path('clientes/habilitados/', views.clientes_habilitados, name='clientes-habilitados'),
 ]
