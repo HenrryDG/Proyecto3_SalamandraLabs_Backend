@@ -3,7 +3,7 @@ from .models import SolicitudPrestamo
 
 @admin.register(SolicitudPrestamo)
 class SolicitudPrestamoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cliente', 'empleado', 'monto_solicitado', 'plazo_meses', 'estado', 'fecha_solicitud')
+    list_display = ('id', 'cliente', 'empleado', 'monto_solicitado', 'estado', 'fecha_solicitud')
     list_filter = ('estado', 'fecha_solicitud')
     search_fields = ('cliente__nombre', 'cliente__apellido_paterno', 'empleado__nombre', 'empleado__apellido_paterno')
 

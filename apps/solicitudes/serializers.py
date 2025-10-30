@@ -20,7 +20,7 @@ class SolicitudSerializer(serializers.ModelSerializer):
         return value
 
     def validate(self, data):
-        required_fields = ['cliente', 'monto_solicitado', 'proposito', 'plazo_meses']
+        required_fields = ['cliente', 'monto_solicitado', 'proposito']
         for field in required_fields:
             if not data.get(field):
                 raise serializers.ValidationError(f"El campo '{field}' es requerido.")

@@ -6,6 +6,7 @@ class Prestamo(models.Model):
     monto_aprobado = models.DecimalField(max_digits=12, decimal_places=2)
     monto_restante = models.DecimalField(max_digits=12, decimal_places=2)
     interes = models.DecimalField(max_digits=5, decimal_places=2)
+    plazo_meses = models.IntegerField(null=True, blank=True)
     fecha_desembolso = models.DateField(null=True, blank=True)
     fecha_plazo = models.DateField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=[

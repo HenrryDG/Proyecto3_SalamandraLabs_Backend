@@ -3,7 +3,7 @@ from .models import Prestamo
 
 @admin.register(Prestamo)
 class PrestamoAdmin(admin.ModelAdmin):
-    list_display = ('id', 'cliente', 'empleado', 'monto_aprobado', 'monto_restante', 'fecha_desembolso', 'estado')
+    list_display = ('id', 'cliente', 'empleado', 'monto_aprobado', 'monto_restante', 'plazo_meses', 'fecha_desembolso', 'estado')
     list_filter = ('estado',)
     search_fields = ('solicitud__cliente__nombre', 'solicitud__cliente__apellido_paterno', 'solicitud__empleado__nombre')
 
