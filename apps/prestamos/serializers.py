@@ -75,7 +75,7 @@ class PrestamoSerializer(serializers.ModelSerializer):
         # --- 4. Estimar plazo inicial ---
         monto_solicitado = Decimal(solicitud.monto_solicitado)
         plazo_meses = int((monto_solicitado / cuota_maxima).to_integral_value(rounding=ROUND_HALF_UP))
-        plazo_meses = max(6, min(plazo_meses, 36))  # rango 6-36 meses
+        plazo_meses = max(6, min(plazo_meses, 12))  # rango 6-12 meses
 
         # --- 5. Calcular monto aprobado según capacidad ---
         monto_aprobado = (cuota_maxima * plazo_meses / (1 + (interes / 100) * plazo_meses)).quantize(Decimal('0.01'))
