@@ -73,7 +73,7 @@ def solicitud_collection(request):
             )
 
 
-@api_view(["GET", "PUT", "PATCH"])
+@api_view(["GET", "PUT", "DELETE", "PATCH"])
 @permission_classes([IsAuthenticated])
 def solicitud_element(request, pk):
     try:
@@ -123,6 +123,29 @@ def solicitud_element(request, pk):
             },
             status=400,
         )
+    
+    # DELETE - Eliminar una solicitud
+    elif request.method == "DELETE":
+        try:
+            # Primero eliminar documentos asociados
+            solicitud.documentos.all().delete()
+            
+            # Luego eliminar la solicitud
+            solicitud.delete()
+            
+            return Response(
+                {"mensaje": f"Solicitud con ID {pk} eliminada exitosamente."},
+                status=200,
+            )
+        except Exception as e:
+            return Response(
+                {
+                    "mensaje": "Error al eliminar la solicitud",
+                    "detalles": str(e),
+                },
+                status=500,
+            )
+
 
     # PATCH - Cambiar el estado de la solicitud
     elif request.method == "PATCH":
