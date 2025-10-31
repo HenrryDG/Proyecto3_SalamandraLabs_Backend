@@ -9,7 +9,6 @@ class SolicitudPrestamo(models.Model):
 
     monto_solicitado = models.DecimalField(max_digits=12, decimal_places=2)
     proposito = models.TextField()
-    plazo_meses = models.IntegerField()
     fecha_solicitud = models.DateField(auto_now_add=True)
     fecha_aprobacion = models.DateField(null=True, blank=True)
     estado = models.CharField(max_length=20, choices=[

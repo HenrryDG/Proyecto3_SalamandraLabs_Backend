@@ -11,6 +11,7 @@ from .models import Prestamo
 from .serializers import PrestamoSerializer
 from drf_spectacular.utils import extend_schema
 
+
 @extend_schema(
     methods=["POST"],
     request=PrestamoSerializer,
@@ -36,17 +37,20 @@ def prestamo_collection(request):
                 {"mensaje": "Error al recuperar los préstamos", "error": str(e)},
                 status=500,
             )
-        
+
     # Crear un préstamo
     if request.method == "POST":
-        try:
-            serializer = PrestamoSerializer(data=request.data)
-            if serializer.is_valid():
+        serializer = PrestamoSerializer(data=request.data)
+        if serializer.is_valid():
+            try:
                 prestamo = serializer.save()
-                return Response(PrestamoSerializer(prestamo).data, status=201)
-            return Response(serializer.errors, status=400)
-        except Exception as e:
-            return Response(
-                {"mensaje": "Error al registrar el préstamo", "error": str(e)},
-                status=500,
-            )
+                return Response(serializer.data, status=201)
+            except Exception as e:
+                return Response({
+                    "mensaje": "Error al crear el préstamo", 
+                    "error": str(e)
+                }, status=500)
+        return Response({
+            "mensaje": "Error en los datos proporcionados",
+            "errores": serializer.errors,
+        }, status=400)
