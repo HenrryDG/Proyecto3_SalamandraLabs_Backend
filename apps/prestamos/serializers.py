@@ -11,6 +11,8 @@ class PrestamoSerializer(serializers.ModelSerializer):
     cliente_nombre = serializers.SerializerMethodField()
     plan_pagos = PlanPagoSerializer(many=True, read_only=True)
 
+    monto_solicitado = serializers.SerializerMethodField()
+
     class Meta:
         model = Prestamo
         fields = '__all__'
@@ -25,12 +27,16 @@ class PrestamoSerializer(serializers.ModelSerializer):
             'monto_aprobado',
             'interes',
             'plan_pagos',
+            'monto_solicitado',            
         ]
 
     def get_cliente_nombre(self, obj):
         cliente = obj.solicitud.cliente
         return f"{cliente.nombre} {cliente.apellido_paterno or ''} {cliente.apellido_materno or ''}".strip()
 
+    def get_monto_solicitado(self, obj):
+        return obj.solicitud.monto_solicitado
+    
     def validate(self, data):
         required_fields = ['solicitud', 'fecha_desembolso']
         for field in required_fields:
@@ -55,7 +61,7 @@ class PrestamoSerializer(serializers.ModelSerializer):
         if ingreso < 2300:
             porcentaje = Decimal('0.32')
         elif ingreso <= 3600:
-            porcentaje = Decimal('0.32')
+            porcentaje = Decimal('0.34')
         elif ingreso <= 6000:
             porcentaje = Decimal('0.35')
         else:
