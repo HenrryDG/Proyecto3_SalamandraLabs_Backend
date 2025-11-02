@@ -81,7 +81,7 @@ class PrestamoSerializer(serializers.ModelSerializer):
         monto_aprobado = (cuota_maxima * plazo_meses / (1 + (interes / 100) * plazo_meses)).quantize(Decimal('0.01'))
 
         # --- 5b. Ajustar plazo si no alcanza monto solicitado ---
-        while monto_aprobado < monto_solicitado and plazo_meses < 36:
+        while monto_aprobado < monto_solicitado and plazo_meses < 12:
             plazo_meses += 1
             monto_aprobado = (cuota_maxima * plazo_meses / (1 + (interes / 100) * plazo_meses)).quantize(Decimal('0.01'))
 
