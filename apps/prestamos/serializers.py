@@ -5,6 +5,7 @@ from decimal import Decimal, ROUND_HALF_UP
 from dateutil.relativedelta import relativedelta
 from apps.plan_pagos.models import PlanPago
 from apps.plan_pagos.serializers import PlanPagoSerializer
+from apps.plan_pagos.utils import actualizar_cuotas_vencidas
 
 
 class PrestamoSerializer(serializers.ModelSerializer):
@@ -125,3 +126,12 @@ class PrestamoSerializer(serializers.ModelSerializer):
             )
 
         return prestamo
+    
+    def to_representation(self, instance):
+        """Antes de serializar, refresca el estado/mora de cuotas vencidas."""
+        try:
+            actualizar_cuotas_vencidas(instance.plan_pagos.all())
+        except Exception:
+            # No bloquear la respuesta si ocurre algún error de actualización.
+            pass
+        return super().to_representation(instance)
