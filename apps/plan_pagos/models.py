@@ -5,14 +5,28 @@ class PlanPago(models.Model):
     prestamo = models.ForeignKey(Prestamo, on_delete=models.PROTECT, related_name='plan_pagos')
     fecha_pago = models.DateField(null=True, blank=True)
     fecha_vencimiento = models.DateField()
-    metodo_pago = models.CharField(max_length=45, null=True, blank=True)
+    # Método de pago seleccionado por el usuario (opcional hasta pagar)
+    metodo_pago = models.CharField(
+        max_length=45,
+        null=True,
+        blank=True,
+        choices=[
+            ("QR", "QR"),
+            ("Efectivo", "Efectivo"),
+        ],
+    )
     monto_cuota = models.DecimalField(max_digits=12, decimal_places=2)
     mora_cuota = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
-    estado = models.CharField(max_length=30, choices=[
-        ('Pendiente', 'Pendiente'), 
-        ('Pagada', 'Pagada'),
-        ('Retraso', 'Retraso')
-    ], default='Pendiente')
+    # Estado administrado por el sistema: Pendiente, Pagada, Vencida
+    estado = models.CharField(
+        max_length=30,
+        choices=[
+            ("Pendiente", "Pendiente"),
+            ("Pagada", "Pagada"),
+            ("Vencida", "Vencida"),
+        ],
+        default="Pendiente",
+    )
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
