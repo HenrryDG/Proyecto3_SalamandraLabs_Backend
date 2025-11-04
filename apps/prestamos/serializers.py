@@ -94,6 +94,9 @@ class PrestamoSerializer(serializers.ModelSerializer):
 
         # --- 5c. Nunca aprobar más del solicitado ---
         monto_aprobado = min(monto_aprobado, monto_solicitado)
+        
+        # --- 5d. Redondear monto aprobado a múltiplos de 100 ---
+        monto_aprobado = (monto_aprobado / Decimal('100')).to_integral_value(rounding=ROUND_HALF_UP) * Decimal('100')
 
         # --- 6. Calcular monto restante con interés simple ---
         monto_restante = (monto_aprobado * (1 + (interes / 100) * plazo_meses)).quantize(Decimal('0.01'))
