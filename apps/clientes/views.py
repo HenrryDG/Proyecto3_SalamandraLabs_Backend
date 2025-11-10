@@ -7,13 +7,30 @@ from drf_spectacular.utils import extend_schema
 from django.db.models import Q
 
 
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def cliente_profile(request):
+    try:
+        # Obtener el cliente asociado al usuario autenticado
+        cliente = Cliente.objects.get(user=request.user)
+        cliente_data = ClienteSerializer(cliente).data
+        return Response(cliente_data, status=200)
+    except Cliente.DoesNotExist:
+        return Response({
+            'mensaje': 'Cliente no encontrado para el usuario autenticado'
+        }, status=404)
+    except Exception as e:
+        return Response({
+            'mensaje': 'Error al recuperar el perfil del cliente',
+            'error': str(e)
+        }, status=500)
+
 @extend_schema(
     methods=["POST"],
     request=ClienteSerializer,
     responses={201: ClienteSerializer},
 )
-
-
 @api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def cliente_collection(request):
