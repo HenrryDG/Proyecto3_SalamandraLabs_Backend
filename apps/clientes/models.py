@@ -1,6 +1,7 @@
 from django.db import models
 
 class Cliente(models.Model):
+    user = models.OneToOneField('auth.User', null=True, blank=True, on_delete=models.CASCADE, related_name="cliente")
     carnet = models.CharField(max_length=12)
     complemento = models.CharField(max_length=2, null=True, blank=True)
     nombre = models.CharField(max_length=30)
