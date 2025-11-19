@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import listar_plan_pagos_por_prestamo, actualizar_plan_pago
+from .views import listar_plan_pagos_por_prestamo, actualizar_plan_pago, plan_pagos_notificaciones
 
 urlpatterns = [
     path('prestamos/<int:prestamo_id>/plan-pagos/', listar_plan_pagos_por_prestamo, name='listar_plan_pagos_por_prestamo'),
