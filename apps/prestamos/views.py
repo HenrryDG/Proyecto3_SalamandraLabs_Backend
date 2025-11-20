@@ -30,6 +30,25 @@ def prestamo_collection(request):
                 prestamos = Prestamo.objects.filter(
                     solicitud__empleado=empleado_logueado
                 ).order_by('-created_at')
+            
+            # Actualizar estado de préstamos según estado de cuotas
+            for prestamo in prestamos:
+                # Solo actualizar si el préstamo no está completado
+                if prestamo.estado != 'Completado':
+                    # Verificar si hay cuotas vencidas
+                    tiene_cuotas_vencidas = prestamo.plan_pagos.filter(estado='Vencida').exists()
+                    
+                    if tiene_cuotas_vencidas:
+                        # Si hay cuotas vencidas, cambiar a Mora
+                        if prestamo.estado != 'Mora':
+                            prestamo.estado = 'Mora'
+                            prestamo.save()
+                    else:
+                        # Si no hay cuotas vencidas, volver a En Curso
+                        if prestamo.estado != 'En Curso':
+                            prestamo.estado = 'En Curso'
+                            prestamo.save()
+            
             serializer = PrestamoSerializer(prestamos, many=True)
             return Response(serializer.data, status=200)
         except Exception as e:
