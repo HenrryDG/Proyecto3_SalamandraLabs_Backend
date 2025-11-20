@@ -25,11 +25,11 @@ def prestamo_collection(request):
         try:
             empleado_logueado = request.user.empleado
             if empleado_logueado.rol == "Administrador":
-                prestamos = Prestamo.objects.all()
+                prestamos = Prestamo.objects.all().order_by('-created_at')
             else:
                 prestamos = Prestamo.objects.filter(
                     solicitud__empleado=empleado_logueado
-                )
+                ).order_by('-created_at')
             serializer = PrestamoSerializer(prestamos, many=True)
             return Response(serializer.data, status=200)
         except Exception as e:

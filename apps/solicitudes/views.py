@@ -30,11 +30,11 @@ def solicitud_collection(request):
         try:
             empleado_logueado = request.user.empleado
             if empleado_logueado.rol == "Administrador":
-                solicitudes = SolicitudPrestamo.objects.all()
+                solicitudes = SolicitudPrestamo.objects.all().order_by('-created_at')
             else:
                 solicitudes = SolicitudPrestamo.objects.filter(
                     empleado=empleado_logueado
-                )
+                ).order_by('-created_at')
             serializer = SolicitudSerializer(solicitudes, many=True)
             return Response(serializer.data, status=200)
         except Exception as e:
