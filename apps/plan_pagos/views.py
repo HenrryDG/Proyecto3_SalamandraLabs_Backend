@@ -53,8 +53,9 @@ def plan_pagos_notificaciones(request):
 
     # Solo cuotas pendientes dentro del rango
     cuotas = PlanPago.objects.filter(
-        estado="Pendiente", fecha_vencimiento__range=(hoy, limite)
-    ).select_related("prestamo_solicitud_cliente")
+        estado="Pendiente",
+        fecha_vencimiento__range=(hoy, limite)
+    ).select_related("prestamo__solicitud__cliente")
 
     notificaciones = []
 
@@ -64,7 +65,6 @@ def plan_pagos_notificaciones(request):
 
         dias_restantes = (cuota.fecha_vencimiento - hoy).days
 
-        # Construir Mensaje
         if dias_restantes == 0:
             mensaje = f"La cuota del préstamo de {nombre_cliente} vence hoy ({cuota.fecha_vencimiento})."
         elif dias_restantes == 1:
