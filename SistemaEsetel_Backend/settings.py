@@ -73,7 +73,29 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     )
 }
- 
+
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'API Esetel',
+    'DESCRIPTION': 'Documentación de la API',
+    'VERSION': '1.0.0',
+
+    'SERVE_INCLUDE_SCHEMA': False,
+
+    # ACTIVAR BEARER TOKEN
+    'SECURITY': [{'BearerAuth': []}],
+
+    'COMPONENTS': {
+        'securitySchemes': {
+            'BearerAuth': {
+                'type': 'http',
+                'scheme': 'bearer',
+                'bearerFormat': 'JWT',
+            }
+        }
+    },
+}
+
+
 
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
