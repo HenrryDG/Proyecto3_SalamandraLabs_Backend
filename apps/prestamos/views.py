@@ -31,23 +31,31 @@ def prestamo_collection(request):
                     solicitud__empleado=empleado_logueado
                 ).order_by('-created_at')
             
-            # Actualizar estado de préstamos según estado de cuotas
+            # Actualizar estado de préstamos según estado de sus cuotas
             for prestamo in prestamos:
-                # Solo actualizar si el préstamo no está completado
-                if prestamo.estado != 'Completado':
-                    # Verificar si hay cuotas vencidas
-                    tiene_cuotas_vencidas = prestamo.plan_pagos.filter(estado='Vencida').exists()
-                    
-                    if tiene_cuotas_vencidas:
-                        # Si hay cuotas vencidas, cambiar a Mora
-                        if prestamo.estado != 'Mora':
-                            prestamo.estado = 'Mora'
-                            prestamo.save()
-                    else:
-                        # Si no hay cuotas vencidas, volver a En Curso
-                        if prestamo.estado != 'En Curso':
-                            prestamo.estado = 'En Curso'
-                            prestamo.save()
+                cuotas_qs = prestamo.plan_pagos.all()
+                if not cuotas_qs.exists():
+                    # Sin cuotas todavía: mantener estado actual
+                    continue
+
+                total = cuotas_qs.count()
+                pagadas = cuotas_qs.filter(estado='Pagada').count()
+                tiene_vencidas = cuotas_qs.filter(estado='Vencida').exists()
+                nuevo_estado = prestamo.estado  # valor por defecto
+
+                # 1. Todas pagadas -> Completado
+                if pagadas == total:
+                    nuevo_estado = 'Completado'
+                # 2. Alguna vencida (y no todas pagadas) -> Mora
+                elif tiene_vencidas:
+                    nuevo_estado = 'Mora'
+                # 3. Caso contrario -> En Curso (hay pendientes pero ninguna vencida)
+                else:
+                    nuevo_estado = 'En Curso'
+
+                if nuevo_estado != prestamo.estado:
+                    prestamo.estado = nuevo_estado
+                    prestamo.save(update_fields=['estado'])
             
             serializer = PrestamoSerializer(prestamos, many=True)
             return Response(serializer.data, status=200)
