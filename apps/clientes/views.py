@@ -32,7 +32,7 @@ def cliente_profile(request):
     responses={201: ClienteSerializer},
 )
 @api_view(['GET', 'POST'])
-@permission_classes([IsAuthenticated])
+#@permission_classes([IsAuthenticated])
 def cliente_collection(request):
     # Listar todos los clientes
     if request.method == 'GET':
