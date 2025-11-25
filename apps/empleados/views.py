@@ -35,7 +35,7 @@ def empleado_collection(request):
     #GET - Listar todos los empleados
     if request.method == 'GET':
         try:
-            empleados = Empleado.objects.all()          
+            empleados = Empleado.objects.all().order_by('-created_at')
             serializer = EmpleadoSerializer(empleados, many=True)
             return Response(serializer.data, status=200)
         except Exception as e:
