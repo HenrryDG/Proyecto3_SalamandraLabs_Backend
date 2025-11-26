@@ -58,6 +58,7 @@ INSTALLED_APPS = [
     'apps.plan_pagos',
     'apps.prestamos',
     'apps.solicitudes',
+    'apps.dashboard',
 
     #LIBRERIAS INSTALADAS
     'corsheaders',
