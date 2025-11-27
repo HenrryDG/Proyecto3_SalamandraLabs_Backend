@@ -108,6 +108,7 @@ class DashboardResumenView(APIView):
                 'tasa_cumplimiento': round(tasa_cumplimiento, 2),
             }
         }
+
         return Response(data, status=status.HTTP_200_OK)
 
 class SolicitudesEstadisticasView(APIView):
@@ -141,6 +142,7 @@ class SolicitudesEstadisticasView(APIView):
             'solicitudes_recientes_7_dias': solicitudes_recientes,
             'distribucion_estado': list(distribucion_estado),
         }
+
         return Response(data, status=status.HTTP_200_OK)
 
 class PrestamosEstadisticasView(APIView):
@@ -195,6 +197,74 @@ class PrestamosEstadisticasView(APIView):
             'distribucion_estado': list(distribucion_estado),
             'distribucion_plazo': list(distribucion_plazo),
             'resumen_financiero': resumen_financiero,
+        }
+        
+        return Response(data, status=status.HTTP_200_OK)
+
+class PlanPagosEstadisticasView(APIView):
+    """
+    GET - Estadísticas detalladas del plan de pagos
+    /api/dashboard/plan-pagos/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Distribución por estado
+        distribucion_estado = PlanPago.objects.values('estado').annotate(
+            cantidad=Count('id'),
+            monto_total=Coalesce(Sum('monto_cuota'), Decimal('0')),
+            mora_total=Coalesce(Sum('mora_cuota'), Decimal('0'))
+        ).order_by('estado')
+
+        # Pagos por método
+        distribucion_metodo = PlanPago.objects.exclude(
+            metodo_pago__isnull=True
+        ).values('metodo_pago').annotate(
+            cantidad=Count('id'),
+            monto_total=Coalesce(Sum('monto_cuota'), Decimal('0'))
+        ).order_by('-cantidad')
+
+        # Cuotas por vencer (próximos 30 días)
+        hoy = timezone.now().date()
+        en_30_dias = hoy + timedelta(days=30)
+        cuotas_por_vencer = PlanPago.objects.filter(
+            estado='Pendiente',
+            fecha_vencimiento__gte=hoy,
+            fecha_vencimiento__lte=en_30_dias
+        ).aggregate(
+            cantidad=Count('id'),
+            monto_total=Coalesce(Sum('monto_cuota'), Decimal('0'))
+        )
+
+        # Cuotas vencidas (ya pasaron la fecha de vencimiento)
+        cuotas_vencidas = PlanPago.objects.filter(
+            estado='Vencida'
+        ).aggregate(
+            cantidad=Count('id'),
+            monto_total=Coalesce(Sum('monto_cuota'), Decimal('0')),
+            mora_total=Coalesce(Sum('mora_cuota'), Decimal('0'))
+        )
+
+        # Resumen de recaudación
+        resumen_recaudacion = {
+            'total_recaudado': float(PlanPago.objects.filter(estado='Pagada').aggregate(
+                total=Coalesce(Sum('monto_cuota'), Decimal('0'))
+            )['total']),
+            'mora_recaudada': float(PlanPago.objects.filter(estado='Pagada').aggregate(
+                total=Coalesce(Sum('mora_cuota'), Decimal('0'))
+            )['total']),
+            'pendiente_por_cobrar': float(PlanPago.objects.filter(
+                estado__in=['Pendiente', 'Vencida']
+            ).aggregate(total=Coalesce(Sum('monto_cuota'), Decimal('0')))['total']),
+        }
+
+        data = {
+            'total_cuotas': PlanPago.objects.count(),
+            'distribucion_estado': list(distribucion_estado),
+            'distribucion_metodo_pago': list(distribucion_metodo),
+            'cuotas_por_vencer_30_dias': cuotas_por_vencer,
+            'cuotas_vencidas': cuotas_vencidas,
+            'resumen_recaudacion': resumen_recaudacion,
         }
         
         return Response(data, status=status.HTTP_200_OK)
