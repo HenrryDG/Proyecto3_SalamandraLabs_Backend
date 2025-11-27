@@ -3,10 +3,11 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Avg, Q, F
-from django.db.models.functions import TruncMonth, TruncWeek, TruncDay, Coalesce
+from django.db.models.functions import ExtractYear, ExtractMonth, Coalesce
 from django.utils import timezone
-from datetime import timedelta
+from datetime import timedelta, date
 from decimal import Decimal
+from collections import defaultdict
 
 from apps.clientes.models import Cliente
 from apps.empleados.models import Empleado
@@ -109,3 +110,35 @@ class DashboardResumenView(APIView):
         }
         return Response(data, status=status.HTTP_200_OK)
 
+class SolicitudesEstadisticasView(APIView):
+    """
+    GET - Estadísticas detalladas de solicitudes de préstamo.
+    /api/dashboard/solicitudes/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Distribución por estado
+        distribucion_estado = SolicitudPrestamo.objects.values('estado').annotate(
+            cantidad=Count('id'),
+            monto_total=Coalesce(Sum('monto_solicitado'), Decimal('0'))
+        ).order_by('estado')
+
+        # Monto promedio solicitado
+        monto_promedio = SolicitudPrestamo.objects.aggregate(
+            promedio=Coalesce(Avg('monto_solicitado'), Decimal('0'))
+        )['promedio']
+
+        # Solicitudes recientes (últimas 7 días)
+        siete_dias_atras = timezone.now() - timedelta(days=7)
+        solicitudes_recientes = SolicitudPrestamo.objects.filter(
+            created_at__gte=siete_dias_atras
+        ).count()
+
+        data = {
+            'total': SolicitudPrestamo.objects.count(),
+            'monto_promedio': float(monto_promedio),
+            'solicitudes_recientes_7_dias': solicitudes_recientes,
+            'distribucion_estado': list(distribucion_estado),
+        }
+        return Response(data, status=status.HTTP_200_OK)
