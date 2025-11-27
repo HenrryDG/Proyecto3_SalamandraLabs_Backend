@@ -142,3 +142,59 @@ class SolicitudesEstadisticasView(APIView):
             'distribucion_estado': list(distribucion_estado),
         }
         return Response(data, status=status.HTTP_200_OK)
+
+class PrestamosEstadisticasView(APIView):
+    """
+    GET - Estadísticas detalladas de préstamos
+    /api/dashboard/prestamos/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        # Distribución por estado
+        distribucion_estado = Prestamo.objects.values('estado').annotate(
+            cantidad=Count('id'),
+            monto_total=Coalesce(Sum('monto_aprobado'), Decimal('0')),
+            monto_restante=Coalesce(Sum('monto_restante'), Decimal('0'))
+        ).order_by('estado')
+
+        # Distribución por plazo
+        distribucion_plazo = Prestamo.objects.exclude(
+            plazo_meses__isnull=True
+        ).values('plazo_meses').annotate(
+            cantidad=Count('id')
+        ).order_by('plazo_meses')
+
+        # Tasa de interés promedio
+        interes_promedio = Prestamo.objects.aggregate(
+            promedio=Coalesce(Avg('interes'), Decimal('0'))
+        )['promedio']
+
+        # Monto promedio aprobado
+        monto_promedio = Prestamo.objects.aggregate(
+            promedio=Coalesce(Avg('monto_aprobado'), Decimal('0'))
+        )['promedio']
+
+        # Resumen financiero
+        resumen_financiero = {
+            'total_desembolsado': float(Prestamo.objects.aggregate(
+                total=Coalesce(Sum('monto_aprobado'), Decimal('0'))
+            )['total']),
+            'total_por_cobrar': float(Prestamo.objects.filter(
+                estado__in=['En Curso', 'Mora']
+            ).aggregate(total=Coalesce(Sum('monto_restante'), Decimal('0')))['total']),
+            'total_cobrado': float(Prestamo.objects.aggregate(
+                total=Coalesce(Sum(F('monto_aprobado') - F('monto_restante')), Decimal('0'))
+            )['total']),
+        }
+
+        data = {
+            'total': Prestamo.objects.count(),
+            'interes_promedio': float(interes_promedio),
+            'monto_promedio': float(monto_promedio),
+            'distribucion_estado': list(distribucion_estado),
+            'distribucion_plazo': list(distribucion_plazo),
+            'resumen_financiero': resumen_financiero,
+        }
+        
+        return Response(data, status=status.HTTP_200_OK)
