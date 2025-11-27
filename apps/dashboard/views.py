@@ -3,7 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from django.db.models import Sum, Count, Avg, Q, F
-from django.db.models.functions import ExtractYear, ExtractMonth, Coalesce
+from django.db.models.functions import ExtractYear, ExtractMonth, ExtractDay, ExtractWeek, Coalesce
 from django.utils import timezone
 from datetime import timedelta, date
 from decimal import Decimal
@@ -265,6 +265,132 @@ class PlanPagosEstadisticasView(APIView):
             'cuotas_por_vencer_30_dias': cuotas_por_vencer,
             'cuotas_vencidas': cuotas_vencidas,
             'resumen_recaudacion': resumen_recaudacion,
+        }
+        
+        return Response(data, status=status.HTTP_200_OK)
+
+class TendenciasView(APIView):
+    """
+    GET - Tendencias generales del sistema para gráficos de línea.
+    /api/dashboard/tendencias/
+    Query params: periodo (7d, 30d, 90d, 365d)
+    """
+    permission_classes = [IsAuthenticated]
+
+    def _agrupar_por_periodo(self, queryset, fecha_campo, dias):
+        """Agrupa los datos según el periodo usando Extract en lugar de Trunc para evitar problemas de timezone"""
+        if dias <= 7:
+            # Agrupar por día
+            return queryset.annotate(
+                anio=ExtractYear(fecha_campo),
+                mes=ExtractMonth(fecha_campo),
+                dia=ExtractDay(fecha_campo)
+            ).values('anio', 'mes', 'dia')
+        elif dias <= 90:
+            # Agrupar por semana
+            return queryset.annotate(
+                anio=ExtractYear(fecha_campo),
+                semana=ExtractWeek(fecha_campo)
+            ).values('anio', 'semana')
+        else:
+            # Agrupar por mes
+            return queryset.annotate(
+                anio=ExtractYear(fecha_campo),
+                mes=ExtractMonth(fecha_campo)
+            ).values('anio', 'mes')
+
+    def _formatear_periodo(self, item, dias):
+        """Formatea el periodo según la granularidad"""
+        if dias <= 7:
+            return f"{item['anio']}-{str(item['mes']).zfill(2)}-{str(item['dia']).zfill(2)}"
+        elif dias <= 90:
+            return f"{item['anio']}-W{str(item['semana']).zfill(2)}"
+        else:
+            return f"{item['anio']}-{str(item['mes']).zfill(2)}"
+
+    def get(self, request):
+        periodo = request.query_params.get('periodo', '30d')
+        
+        # Calcular fecha de inicio según el periodo
+        dias = {'7d': 7, '30d': 30, '90d': 90, '365d': 365}.get(periodo, 30)
+        fecha_inicio = timezone.now() - timedelta(days=dias)
+
+        # Tendencia de clientes nuevos
+        clientes_qs = Cliente.objects.filter(created_at__gte=fecha_inicio)
+        clientes_agrupados = self._agrupar_por_periodo(clientes_qs, 'created_at', dias)
+        tendencia_clientes_raw = clientes_agrupados.annotate(cantidad=Count('id')).order_by('anio')
+        
+        tendencia_clientes = [
+            {'periodo': self._formatear_periodo(item, dias), 'cantidad': item['cantidad']}
+            for item in tendencia_clientes_raw
+        ]
+
+        # Tendencia de solicitudes
+        solicitudes_qs = SolicitudPrestamo.objects.filter(created_at__gte=fecha_inicio)
+        solicitudes_agrupadas = self._agrupar_por_periodo(solicitudes_qs, 'created_at', dias)
+        tendencia_solicitudes_raw = solicitudes_agrupadas.annotate(
+            total=Count('id'),
+            aprobadas=Count('id', filter=Q(estado='Aprobada')),
+            rechazadas=Count('id', filter=Q(estado='Rechazada')),
+            pendientes=Count('id', filter=Q(estado='Pendiente'))
+        ).order_by('anio')
+        
+        tendencia_solicitudes = [
+            {
+                'periodo': self._formatear_periodo(item, dias),
+                'total': item['total'],
+                'aprobadas': item['aprobadas'],
+                'rechazadas': item['rechazadas'],
+                'pendientes': item['pendientes']
+            }
+            for item in tendencia_solicitudes_raw
+        ]
+
+        # Tendencia de préstamos desembolsados
+        prestamos_qs = Prestamo.objects.filter(created_at__gte=fecha_inicio)
+        prestamos_agrupados = self._agrupar_por_periodo(prestamos_qs, 'created_at', dias)
+        tendencia_prestamos_raw = prestamos_agrupados.annotate(
+            cantidad=Count('id'),
+            monto_total=Coalesce(Sum('monto_aprobado'), Decimal('0'))
+        ).order_by('anio')
+        
+        tendencia_prestamos = [
+            {
+                'periodo': self._formatear_periodo(item, dias),
+                'cantidad': item['cantidad'],
+                'monto_total': float(item['monto_total'])
+            }
+            for item in tendencia_prestamos_raw
+        ]
+
+        # Tendencia de pagos recibidos
+        pagos_qs = PlanPago.objects.filter(
+            estado='Pagada',
+            fecha_pago__isnull=False,
+            fecha_pago__gte=fecha_inicio.date()
+        )
+        pagos_agrupados = self._agrupar_por_periodo(pagos_qs, 'fecha_pago', dias)
+        tendencia_pagos_raw = pagos_agrupados.annotate(
+            cantidad=Count('id'),
+            monto_total=Coalesce(Sum('monto_cuota'), Decimal('0'))
+        ).order_by('anio')
+        
+        tendencia_pagos = [
+            {
+                'periodo': self._formatear_periodo(item, dias),
+                'cantidad': item['cantidad'],
+                'monto_total': float(item['monto_total'])
+            }
+            for item in tendencia_pagos_raw
+        ]
+
+        data = {
+            'periodo_seleccionado': periodo,
+            'fecha_inicio': fecha_inicio.isoformat(),
+            'tendencia_clientes': tendencia_clientes,
+            'tendencia_solicitudes': tendencia_solicitudes,
+            'tendencia_prestamos': tendencia_prestamos,
+            'tendencia_pagos': tendencia_pagos,
         }
         
         return Response(data, status=status.HTTP_200_OK)
