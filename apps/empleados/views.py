@@ -23,12 +23,12 @@ def empleado_login(request):
 
     # --- Validación del horario ---
     hora_inicio = time(8, 0)
-    hora_fin = time(12, 15)
+    hora_fin = time(16, 15)
     hora_actual = datetime.now().time()
 
     if not (hora_inicio <= hora_actual <= hora_fin):
         return Response({
-            "mensaje": "Solo puedes iniciar sesión entre las 08:00 a.m. y 12:15 p.m."
+            "mensaje": "Solo puedes iniciar sesión entre las 08:00 a.m. y 16:15 p.m."
         }, status=status.HTTP_403_FORBIDDEN)
 
     # --- Verificación de usuario y empleado ---
