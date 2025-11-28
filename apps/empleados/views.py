@@ -2,9 +2,67 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from rest_framework.permissions import IsAuthenticated
 from .models import Empleado
-from .serializers import EmpleadoSerializer
+from .serializers import EmpleadoSerializer, EmpleeadoLoginSerializer
 from drf_spectacular.utils import extend_schema
 from django.contrib.auth.models import User
+from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework import status
+from datetime import datetime, time
+from rest_framework.test import APIRequestFactory
+from datetime import datetime, time
+
+@extend_schema(
+    methods=["POST"],
+    request=EmpleeadoLoginSerializer,
+    responses={200: EmpleeadoLoginSerializer},
+)   
+
+@api_view(['POST'])
+def empleado_login(request):
+    """Login de empleados con horario y generación segura de token JWT."""
+
+    # --- Validación del horario ---
+    hora_inicio = time(8, 0)
+    hora_fin = time(16, 15)
+    hora_actual = datetime.now().time()
+
+    if not (hora_inicio <= hora_actual <= hora_fin):
+        return Response({
+            "mensaje": "Solo puedes iniciar sesión entre las 08:00 a.m. y 16:15 p.m. la hora"
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    # --- Verificación de usuario y empleado ---
+    username = request.data.get('username')
+    password = request.data.get('password')
+
+    try:
+        user = User.objects.get(username=username)
+        empleado = Empleado.objects.get(user=user)
+    except (User.DoesNotExist, Empleado.DoesNotExist):
+        return Response({
+            "mensaje": "Credenciales inválidas"
+        }, status=status.HTTP_401_UNAUTHORIZED)
+
+    if not empleado.activo:
+        return Response({
+            "mensaje": "Empleado inactivo. Contacte al administrador."
+        }, status=status.HTTP_403_FORBIDDEN)
+
+    # --- RECONSTRUIR EL REQUEST PARA JWT (soluciona RawPostDataException) ---
+    factory = APIRequestFactory()
+    jwt_request = factory.post(
+        "/api/token/",
+        {"username": username, "password": password},
+        format='json'
+    )
+
+    # TokenObtainPairView necesita el usuario autenticado dentro del request
+    jwt_request.user = user
+
+    # --- Ejecutar la vista de SimpleJWT ---
+    response = TokenObtainPairView.as_view()(jwt_request)
+
+    return response
 
 
 @api_view(['GET'])

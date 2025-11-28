@@ -96,3 +96,7 @@ class EmpleadoSerializer(serializers.ModelSerializer):
         instance.save()
 
         return instance
+    
+class EmpleeadoLoginSerializer(serializers.Serializer):
+    username = serializers.CharField()
+    password = serializers.CharField()

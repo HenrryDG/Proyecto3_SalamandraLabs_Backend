@@ -4,8 +4,9 @@ from . import views
 
 urlpatterns = [
 
-    # AUTENTICACION JWT
+    # # AUTENTICACION JWT
     path('login/', TokenObtainPairView.as_view(), name='api-login'),
+    path('empleados/login/', views.empleado_login, name='empleado-login'),
     path('token/refresh/', TokenRefreshView.as_view(), name='token-refresh'),
 
     # Rutas RESTful
