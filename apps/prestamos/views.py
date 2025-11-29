@@ -54,9 +54,18 @@ def prestamo_collection(request):
                 else:
                     nuevo_estado = 'En Curso'
 
+                campos_actualizar = []
                 if nuevo_estado != prestamo.estado:
                     prestamo.estado = nuevo_estado
-                    prestamo.save(update_fields=['estado'])
+                    campos_actualizar.append('estado')
+
+                # Si está completado, forzar monto restante a 0 para evitar residuos decimales
+                if nuevo_estado == 'Completado' and prestamo.monto_restante != 0:
+                    prestamo.monto_restante = 0
+                    campos_actualizar.append('monto_restante')
+
+                if campos_actualizar:
+                    prestamo.save(update_fields=campos_actualizar)
             
             serializer = PrestamoSerializer(prestamos, many=True)
             return Response(serializer.data, status=200)
