@@ -73,6 +73,35 @@ def solicitud_collection(request):
             )
 
 
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def solicitudes_por_cliente(request, cliente_id):
+    """Lista todas las solicitudes asociadas a un cliente específico."""
+    try:
+        cliente = Cliente.objects.get(pk=cliente_id)
+    except Cliente.DoesNotExist:
+        return Response(
+            {
+                "mensaje": "Cliente no encontrado",
+                "error": f"El cliente con ID {cliente_id} no existe",
+            },
+            status=404,
+        )
+
+    try:
+        solicitudes = SolicitudPrestamo.objects.filter(cliente=cliente).order_by('-created_at')
+        serializer = SolicitudSerializer(solicitudes, many=True)
+        return Response(serializer.data, status=200)
+    except Exception as e:
+        return Response(
+            {
+                "mensaje": "Error al recuperar las solicitudes del cliente",
+                "detalles": str(e),
+            },
+            status=500,
+        )
+
+
 @api_view(["GET", "PUT", "DELETE", "PATCH"])
 @permission_classes([IsAuthenticated])
 def solicitud_element(request, pk):
