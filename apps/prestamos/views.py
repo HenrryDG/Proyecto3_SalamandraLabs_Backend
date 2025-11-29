@@ -9,6 +9,7 @@ from rest_framework.decorators import (
 from rest_framework.permissions import IsAuthenticated
 from .models import Prestamo
 from .serializers import PrestamoSerializer
+from apps.clientes.models import Cliente
 from drf_spectacular.utils import extend_schema
 
 
@@ -81,3 +82,32 @@ def prestamo_collection(request):
             "mensaje": "Error en los datos proporcionados",
             "errores": serializer.errors,
         }, status=400)
+
+
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def prestamos_por_cliente(request, cliente_id):
+    """Lista todos los préstamos asociados a un cliente específico."""
+    try:
+        cliente = Cliente.objects.get(pk=cliente_id)
+    except Cliente.DoesNotExist:
+        return Response(
+            {
+                "mensaje": "Cliente no encontrado",
+                "error": f"El cliente con ID {cliente_id} no existe",
+            },
+            status=404,
+        )
+
+    try:
+        prestamos = Prestamo.objects.filter(solicitud__cliente=cliente).order_by('-created_at')
+        serializer = PrestamoSerializer(prestamos, many=True)
+        return Response(serializer.data, status=200)
+    except Exception as e:
+        return Response(
+            {
+                "mensaje": "Error al recuperar los préstamos del cliente",
+                "detalles": str(e),
+            },
+            status=500,
+        )
