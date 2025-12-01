@@ -11,7 +11,7 @@ from datetime import datetime, time
 from rest_framework.test import APIRequestFactory
 from datetime import datetime, time
 from apps.auditoria.models import Auditoria
-from apps.auditoria.utils import  registrar_login, registrar_logout
+from apps.auditoria.utils import  registrar_login, registrar_logout, registrar_creacion_empleado, registrar_actualizacion_empleado, registrar_estado_empleado
 
 
 @extend_schema(
@@ -114,6 +114,10 @@ def empleado_collection(request):
         if serializer.is_valid():
             try:
                 empleado = serializer.save()
+
+                # Registrar auditoría de creación de empleado
+                registrar_creacion_empleado(request, request.user, empleado)
+                
                 return Response(serializer.data, status=201)
             except Exception as e:
                 return Response({
@@ -157,7 +161,14 @@ def empleado_element(request, pk):
         serializer = EmpleadoSerializer(empleado, data=request.data, partial=True)
         if serializer.is_valid():
             try:
-                serializer.save()
+                # Guardar los valores antiguos antes de guardar cambios
+                datos_anteriores = {campo: getattr(empleado, campo) for campo in serializer.validated_data.keys()}
+                
+                empleado_actualizado = serializer.save()
+               
+                # Registrar auditoría de actualización de empleado
+                registrar_actualizacion_empleado(request, request.user, empleado_actualizado, datos_anteriores, serializer.validated_data)
+               
                 return Response(serializer.data, status=200)
             except Exception as e:
                 return Response({
@@ -186,6 +197,9 @@ def empleado_element(request, pk):
             empleado.user.save()
 
             mensaje = "Empleado deshabilitado exitosamente" if not empleado.activo else "Empleado habilitado exitosamente"
+
+            # Registrar auditoría de cambio de estado de empleado
+            registrar_estado_empleado(request, request.user, empleado)
 
             return Response({
                 "mensaje": mensaje,
