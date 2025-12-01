@@ -456,9 +456,13 @@ class ClienteDashboardView(APIView):
         # =====================================================================
         # PLAN DE PAGOS (CUOTAS) DEL CLIENTE
         # =====================================================================
-        todas_cuotas = PlanPago.objects.filter(
-            prestamo__solicitud__cliente=cliente
-        ).select_related('prestamo').order_by('fecha_vencimiento')
+        ultimo_prestamo = Prestamo.objects.filter(solicitud__cliente=cliente).order_by('-created_at').first()
+        if ultimo_prestamo:
+            todas_cuotas = PlanPago.objects.filter(
+                prestamo=ultimo_prestamo
+            ).select_related('prestamo').order_by('fecha_vencimiento')
+        else:
+            todas_cuotas = PlanPago.objects.none()
 
         plan_pagos_resumen = {
             'total_cuotas': todas_cuotas.count(),
