@@ -6,7 +6,7 @@ from .serializers import AuditoriaSerializer
 
 
 @api_view(['GET'])
-#@permission_classes([IsAuthenticated])
+@permission_classes([IsAuthenticated])
 def listar_auditorias(request):
     """
     Endpoint para listar auditorías.
