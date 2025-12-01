@@ -10,18 +10,26 @@ from .serializers import (
     ResumenNotificacionesSerializer,
     ConfiguracionNotificacionSerializer,
 )
-from .types import ConfiguracionNotificacion
+from .types import ConfiguracionNotificacion, TipoNotificacion
+
+
+TIPOS_PLAN_PAGOS = {
+    TipoNotificacion.RECORDATORIO_CUOTA.value,
+    TipoNotificacion.CUOTA_PROXIMA_VENCER.value,
+    TipoNotificacion.CUOTA_VENCE_HOY.value,
+    TipoNotificacion.CUOTA_VENCIDA.value,
+}
 
 
 @extend_schema(
     responses={200: NotificacionSerializer(many=True)},
-    description="Obtiene todas las notificaciones del cliente autenticado.",
+    description="Obtiene las notificaciones de plan de pagos del cliente autenticado (recordatorios, cuotas próximas, vencidas).",
 )
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])
 def mis_notificaciones(request):
     """
-    Obtiene todas las notificaciones del cliente autenticado.
+    Obtiene las notificaciones de plan de pagos del cliente autenticado.
     """
     try:
         # Verificar si el usuario es un cliente
@@ -36,8 +44,14 @@ def mis_notificaciones(request):
         service = NotificacionService()
         notificaciones = service.obtener_notificaciones_cliente(cliente.id)
         
+        # Filtrar solo notificaciones de plan de pagos
+        notificaciones_filtradas = [
+            n for n in notificaciones 
+            if n.tipo.value in TIPOS_PLAN_PAGOS
+        ]
+        
         # Convertir a diccionarios para la respuesta
-        data = [n.to_dict() for n in notificaciones]
+        data = [n.to_dict() for n in notificaciones_filtradas]
         
         return Response({
             "total": len(data),
