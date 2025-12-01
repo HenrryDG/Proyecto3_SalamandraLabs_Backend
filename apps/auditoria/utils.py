@@ -31,7 +31,7 @@ def registrar_login(request, user, empleado=None):
     
     Auditoria.objects.create(
         usuario=user,
-        accion='LOGIN',
+        accion='INICIO DE SESIÓN',
         tabla='auth_user',
         descripcion=descripcion,
         ip=get_client_ip(request)
@@ -50,7 +50,7 @@ def registrar_logout(request, user, empleado=None):
     
     Auditoria.objects.create(
         usuario=user,
-        accion='LOGOUT',
+        accion='CIERRE DE SESIÓN',
         tabla='auth_user',
         descripcion=descripcion,
         ip=get_client_ip(request)
@@ -66,7 +66,7 @@ def registrar_creacion_cliente(request, user, cliente):
     
     Auditoria.objects.create(
         usuario=user,
-        accion='CREAR',
+        accion='REGISTRO',
         tabla='clientes',
         descripcion=descripcion,
         ip=get_client_ip(request)
@@ -89,7 +89,7 @@ def registrar_actualizacion_cliente(request, user, cliente, datos_viejos, datos_
 
             Auditoria.objects.create(
                 usuario=user,
-                accion='ACTUALIZAR',
+                accion='ACTUALIZACIÓN',
                 tabla='clientes',
                 descripcion=descripcion,
                 ip=get_client_ip(request)
@@ -103,7 +103,7 @@ def registrar_estado_cliente(request, user, cliente):
     
     Auditoria.objects.create(
         usuario=user,
-        accion='ACTUALIZAR',
+        accion='ACTUALIZACIÓN',
         tabla='clientes',
         descripcion=descripcion,
         ip=get_client_ip(request)
@@ -120,7 +120,7 @@ def registrar_creacion_empleado(request, user, empleado):
     
     Auditoria.objects.create(
         usuario=user,
-        accion='CREAR',
+        accion='REGISTRO',
         tabla='empleados',
         descripcion=descripcion,
         ip=get_client_ip(request)
@@ -143,7 +143,7 @@ def registrar_actualizacion_empleado(request, user, empleado, datos_viejos, dato
 
             Auditoria.objects.create(
                 usuario=user,
-                accion='ACTUALIZAR',
+                accion='ACTUALIZACIÓN',
                 tabla='empleados',
                 descripcion=descripcion,
                 ip=get_client_ip(request)
@@ -156,7 +156,7 @@ def registrar_estado_empleado(request, user, empleado):
     
     Auditoria.objects.create(
         usuario=user,
-        accion='ACTUALIZAR',
+        accion='ACTUALIZACIÓN',
         tabla='empleados',
         descripcion=descripcion,
         ip=get_client_ip(request)
@@ -173,7 +173,7 @@ def registrar_creacion_solicitud(request, user, solicitud):
     
     Auditoria.objects.create(
         usuario=user,
-        accion='CREAR',
+        accion='REGISTRO',
         tabla='solicitudes',
         descripcion=descripcion,
         ip=get_client_ip(request)
@@ -195,7 +195,7 @@ def registrar_actualizacion_solicitud(request, user, solicitud, datos_viejos, da
 
             Auditoria.objects.create(
                 usuario=user,
-                accion='ACTUALIZAR',
+                accion='ACTUALIZACIÓN',
                 tabla='solicitudes',
                 descripcion=descripcion,
                 ip=get_client_ip(request)
@@ -220,7 +220,7 @@ def registrar_estado_solicitud(request, user, solicitud):
 
     Auditoria.objects.create(
         usuario=user,
-        accion="ACTUALIZAR",
+        accion="ACTUALIZACIÓN",
         tabla="solicitudes",
         descripcion=descripcion,
         ip=get_client_ip(request)
@@ -233,7 +233,7 @@ def registrar_eliminacion_solicitud(request, user, solicitud):
     
     Auditoria.objects.create(
         usuario=user,
-        accion='ELIMINAR',
+        accion='ELIMINACIÓN',
         tabla='solicitudes',
         descripcion=descripcion,
         ip=get_client_ip(request)
@@ -259,7 +259,7 @@ def registrar_actualizacion_plan_pago(request, user, plan_pago, datos_viejos, da
 
             Auditoria.objects.create(
                 usuario=user,
-                accion="ACTUALIZAR",
+                accion="ACTUALIZACIÓN",
                 tabla="plan_pagos",
                 descripcion=descripcion,
                 ip=get_client_ip(request),

@@ -3,11 +3,11 @@ from django.contrib.auth.models import User
 
 class Auditoria(models.Model):
     ACCIONES = (
-        ('CREAR', 'Crear'),
-        ('ACTUALIZAR', 'Actualizar'),
-        ('ELIMINAR', 'Eliminar'),
-        ('LOGIN', 'Inicio de sesión'),
-        ('LOGOUT', 'Cierre de sesión'),
+        ('REGISTRO', 'Registro'),
+        ('ACTUALIZACIÓN', 'Actualización'),
+        ('ELIMINACIÓN', 'Eliminación'),
+        ('INICIO DE SESIÓN', 'Inicio de sesión'),
+        ('CIERRE DE SESIÓN', 'Cierre de sesión'),
     )
 
     usuario = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True)
