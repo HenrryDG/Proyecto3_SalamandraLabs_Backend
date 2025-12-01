@@ -15,6 +15,7 @@ from apps.solicitudes.models import SolicitudPrestamo
 from apps.prestamos.models import Prestamo
 from apps.plan_pagos.models import PlanPago
 from apps.documentos.models import Documento
+from apps.notificaciones.services import NotificacionService
 
 
 class DashboardResumenView(APIView):
@@ -394,3 +395,159 @@ class TendenciasView(APIView):
         }
         
         return Response(data, status=status.HTTP_200_OK)
+
+
+class ClienteDashboardView(APIView):
+    """
+    GET - Dashboard completo para un cliente específico
+    /api/dashboard/cliente/<id>/
+    """
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request, cliente_id):
+        try:
+            cliente = Cliente.objects.get(pk=cliente_id)
+        except Cliente.DoesNotExist:
+            return Response(
+                {'error': 'Cliente no encontrado'},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        hoy = timezone.now().date()
+
+        # =====================================================================
+        # SOLICITUDES DEL CLIENTE
+        # =====================================================================
+        solicitudes = SolicitudPrestamo.objects.filter(cliente=cliente).order_by('-created_at')
+        
+        solicitudes_resumen = {
+            'total': solicitudes.count(),
+            'pendientes': solicitudes.filter(estado='Pendiente').count(),
+            'aprobadas': solicitudes.filter(estado='Aprobada').count(),
+            'rechazadas': solicitudes.filter(estado='Rechazada').count(),
+            'monto_total_solicitado': float(solicitudes.aggregate(
+                total=Coalesce(Sum('monto_solicitado'), Decimal('0'))
+            )['total']),
+        }
+
+        # =====================================================================
+        # PRÉSTAMOS DEL CLIENTE
+        # =====================================================================
+        prestamos = Prestamo.objects.filter(
+            solicitud__cliente=cliente
+        ).select_related('solicitud').order_by('-created_at')
+
+        prestamos_resumen = {
+            'total': prestamos.count(),
+            'en_curso': prestamos.filter(estado='En Curso').count(),
+            'en_mora': prestamos.filter(estado='Mora').count(),
+            'completados': prestamos.filter(estado='Completado').count(),
+            'monto_total_aprobado': float(prestamos.aggregate(
+                total=Coalesce(Sum('monto_aprobado'), Decimal('0'))
+            )['total']),
+            'monto_total_restante': float(prestamos.filter(
+                estado__in=['En Curso', 'Mora']
+            ).aggregate(total=Coalesce(Sum('monto_restante'), Decimal('0')))['total']),
+            'monto_total_pagado': float(prestamos.aggregate(
+                total=Coalesce(Sum(F('monto_aprobado') - F('monto_restante')), Decimal('0'))
+            )['total']),
+        }
+
+        # =====================================================================
+        # PLAN DE PAGOS (CUOTAS) DEL CLIENTE
+        # =====================================================================
+        ultimo_prestamo = Prestamo.objects.filter(solicitud__cliente=cliente).order_by('-created_at').first()
+        if ultimo_prestamo:
+            todas_cuotas = PlanPago.objects.filter(
+                prestamo=ultimo_prestamo
+            ).select_related('prestamo').order_by('fecha_vencimiento')
+        else:
+            todas_cuotas = PlanPago.objects.none()
+
+        plan_pagos_resumen = {
+            'total_cuotas': todas_cuotas.count(),
+            'cuotas_pagadas': todas_cuotas.filter(estado='Pagada').count(),
+            'cuotas_pendientes': todas_cuotas.filter(estado='Pendiente').count(),
+            'cuotas_vencidas': todas_cuotas.filter(estado='Vencida').count(),
+            'monto_total_cuotas': float(todas_cuotas.aggregate(
+                total=Coalesce(Sum('monto_cuota'), Decimal('0'))
+            )['total']),
+            'monto_pagado': float(todas_cuotas.filter(estado='Pagada').aggregate(
+                total=Coalesce(Sum('monto_cuota'), Decimal('0'))
+            )['total']),
+            'monto_pendiente': float(todas_cuotas.filter(
+                estado__in=['Pendiente', 'Vencida']
+            ).aggregate(total=Coalesce(Sum('monto_cuota'), Decimal('0')))['total']),
+            'mora_acumulada': float(todas_cuotas.aggregate(
+                total=Coalesce(Sum('mora_cuota'), Decimal('0'))
+            )['total']),
+            'mora_pendiente': float(todas_cuotas.filter(
+                estado='Vencida'
+            ).aggregate(total=Coalesce(Sum('mora_cuota'), Decimal('0')))['total']),
+        }
+
+        # Próxima cuota a pagar 
+        proxima_cuota = todas_cuotas.filter(
+            Q(estado='Vencida') | Q(estado='Pendiente')
+        ).order_by('fecha_vencimiento').first()
+
+        proxima_cuota_data = None
+        if proxima_cuota:
+            dias_para_vencer = (proxima_cuota.fecha_vencimiento - hoy).days
+            proxima_cuota_data = {
+                'id': proxima_cuota.id,
+                'prestamo_id': proxima_cuota.prestamo.id,
+                'numero_cuota': self._obtener_numero_cuota(proxima_cuota),
+                'monto_cuota': float(proxima_cuota.monto_cuota),
+                'mora_cuota': float(proxima_cuota.mora_cuota),
+                'total_a_pagar': float(proxima_cuota.monto_cuota + proxima_cuota.mora_cuota),
+                'fecha_vencimiento': proxima_cuota.fecha_vencimiento.isoformat(),
+                'estado': proxima_cuota.estado,
+                'dias_para_vencer': dias_para_vencer,
+                'metodo_pago': proxima_cuota.metodo_pago,
+            }
+
+        # Último pago realizado 
+        ultimo_pago = todas_cuotas.filter(estado='Pagada').order_by('-fecha_pago').first()
+
+        ultimo_pago_data = None
+        if ultimo_pago:
+            ultimo_pago_data = {
+                'id': ultimo_pago.id,
+                'prestamo_id': ultimo_pago.prestamo.id,
+                'numero_cuota': self._obtener_numero_cuota(ultimo_pago),
+                'monto_cuota': float(ultimo_pago.monto_cuota),
+                'mora_cuota': float(ultimo_pago.mora_cuota),
+                'total_pagado': float(ultimo_pago.monto_cuota + ultimo_pago.mora_cuota),
+                'fecha_pago': ultimo_pago.fecha_pago.isoformat() if ultimo_pago.fecha_pago else None,
+                'fecha_vencimiento': ultimo_pago.fecha_vencimiento.isoformat(),
+                'metodo_pago': ultimo_pago.metodo_pago,
+            }
+       
+        # =====================================================================
+        # RESPUESTA FINAL
+        # =====================================================================
+        data = {
+            'solicitudes': solicitudes_resumen,
+            'prestamos': prestamos_resumen,
+            'plan_pagos': {
+                'resumen': plan_pagos_resumen,
+                'proxima_cuota': proxima_cuota_data,
+                'ultimo_pago': ultimo_pago_data,
+            },
+            'fecha_consulta': timezone.now().isoformat(),
+        }
+
+        return Response(data, status=status.HTTP_200_OK)
+
+    def _obtener_numero_cuota(self, cuota):
+        """Obtiene el número de cuota dentro del préstamo"""
+        cuotas_prestamo = list(
+            PlanPago.objects.filter(prestamo=cuota.prestamo)
+            .order_by('fecha_vencimiento')
+            .values_list('id', flat=True)
+        )
+        try:
+            return cuotas_prestamo.index(cuota.id) + 1
+        except ValueError:
+            return 1

@@ -4,8 +4,8 @@ from .views import (
     SolicitudesEstadisticasView,
     PrestamosEstadisticasView,
     PlanPagosEstadisticasView,
-
     TendenciasView,
+    ClienteDashboardView,
 )
 
 urlpatterns = [
@@ -18,4 +18,6 @@ urlpatterns = [
     # Tendencias y gráficos de línea
     path('dashboard/tendencias/', TendenciasView.as_view(), name='dashboard-tendencias'),
     
+    # Dashboard específico para un cliente
+    path('dashboard/cliente/<int:cliente_id>/', ClienteDashboardView.as_view(), name='dashboard-cliente'),
 ]
