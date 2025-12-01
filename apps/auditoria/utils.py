@@ -163,6 +163,81 @@ def registrar_estado_empleado(request, user, empleado):
     )
 
 
+#####################################################################
+################## AUDITORIA DE SOLICITUDES #########################
+#####################################################################
+
+def registrar_creacion_solicitud(request, user, solicitud):
+    """Crea un registro de auditoría para la creación de una solicitud."""
+    descripcion = f"El usuario {user.username} registró la solicitud del cliente {solicitud.cliente.nombre} {solicitud.cliente.apellido_paterno or ''} {solicitud.cliente.apellido_materno or ''} con un monto solicitado de {solicitud.monto_solicitado}."
+    
+    Auditoria.objects.create(
+        usuario=user,
+        accion='CREAR',
+        tabla='solicitudes',
+        descripcion=descripcion,
+        ip=get_client_ip(request)
+    )
+
+def registrar_actualizacion_solicitud(request, user, solicitud, datos_viejos, datos_nuevos):
+    """Crea un registro de auditoría para la actualización de una solicitud, campo por campo."""
+    # Iterar sobre los datos nuevos para comparar con los viejos
+    for campo, valor_nuevo in datos_nuevos.items():
+        # Obtener el valor viejo para comparación
+        valor_viejo = datos_viejos.get(campo)
+
+        # Si el valor ha cambiado, registrar la auditoría
+        if valor_viejo != valor_nuevo:
+            descripcion = (
+                f"El usuario {user.username} actualizó el {campo} de la solicitud ID {solicitud.id} "
+                f"de '{valor_viejo}' a '{valor_nuevo}'."
+            )
+
+            Auditoria.objects.create(
+                usuario=user,
+                accion='ACTUALIZAR',
+                tabla='solicitudes',
+                descripcion=descripcion,
+                ip=get_client_ip(request)
+            )
+
+def registrar_estado_solicitud(request, user, solicitud):
+    """Crea un registro de auditoría para el cambio de estado de una solicitud."""
+    
+    # Determinar la acción según el estado nuevo
+    if solicitud.estado == "Aprobada":
+        accion_estado = "aprobó"
+    elif solicitud.estado == "Rechazada":
+        accion_estado = "rechazó"
+    else:
+        accion_estado = "cambió a estado Pendiente"
+    
+    descripcion = (
+        f"El usuario {user.username} {accion_estado} la solicitud ID {solicitud.id} "
+        f"del cliente {solicitud.cliente.nombre} {solicitud.cliente.apellido_paterno or ''} "
+        f"{solicitud.cliente.apellido_materno or ''}."
+    )
+
+    Auditoria.objects.create(
+        usuario=user,
+        accion="ACTUALIZAR",
+        tabla="solicitudes",
+        descripcion=descripcion,
+        ip=get_client_ip(request)
+    )
+
+
+def registrar_eliminacion_solicitud(request, user, solicitud):
+    """Crea un registro de auditoría para la eliminación de una solicitud."""
+    descripcion = f"El usuario {user.username} eliminó la solicitud ID {solicitud.id} del cliente {solicitud.cliente.nombre} {solicitud.cliente.apellido_paterno or ''} {solicitud.cliente.apellido_materno or ''}."
+    
+    Auditoria.objects.create(
+        usuario=user,
+        accion='ELIMINAR',
+        tabla='solicitudes',
+        descripcion=descripcion,
+        ip=get_client_ip(request)
+    )
 
 
 

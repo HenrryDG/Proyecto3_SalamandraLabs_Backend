@@ -15,6 +15,7 @@ from .serializers import SolicitudSerializer
 from drf_spectacular.utils import extend_schema
 from django.utils import timezone
 from ..documentos.utils import limpiar_texto, extraer_direccion_ocr
+from apps.auditoria.utils import registrar_creacion_solicitud, registrar_actualizacion_solicitud, registrar_estado_solicitud, registrar_eliminacion_solicitud
 
 
 @extend_schema(
@@ -56,6 +57,11 @@ def solicitud_collection(request):
             serializer = SolicitudSerializer(data=data_con_empleado)
             if serializer.is_valid():
                 solicitud = serializer.save()
+                
+                # Registrar auditoría de creación de solicitud
+                registrar_creacion_solicitud(request, request.user, solicitud)
+            
+
                 return Response(serializer.data, status=201)
             else:
                 return Response(
@@ -132,10 +138,23 @@ def solicitud_element(request, pk):
 
     # PUT - Actualizar datos de la solicitud
     elif request.method == "PUT":
+       
+        datos_viejos = SolicitudSerializer(solicitud).data.copy()
         serializer = SolicitudSerializer(solicitud, data=request.data, partial=True)
+
         if serializer.is_valid():
             try:
-                serializer.save()
+
+                solicitud_actualizada = serializer.save()
+
+                # Auditoría campo por campo
+                registrar_actualizacion_solicitud(
+                    request,
+                    request.user,
+                    solicitud,
+                    datos_viejos,
+                    request.data,
+                )
                 return Response(serializer.data, status=200)
             except Exception as e:
                 return Response(
@@ -156,6 +175,9 @@ def solicitud_element(request, pk):
     # DELETE - Eliminar una solicitud
     elif request.method == "DELETE":
         try:
+            # Registrar auditoría de eliminación de solicitud
+            registrar_eliminacion_solicitud(request, request.user, solicitud)
+
             # Primero eliminar documentos asociados
             solicitud.documentos.all().delete()
             
@@ -180,19 +202,22 @@ def solicitud_element(request, pk):
     elif request.method == "PATCH":
         try:
             nuevo_estado = request.data.get("estado")
+
             if nuevo_estado not in ["Pendiente", "Aprobada", "Rechazada"]:
                 return Response(
                     {
                         "mensaje": "Estado inválido",
-                        "error": "El estado debe ser 'Pendiente', 'Aprobada' o 'Rechazada'.",
+                        "error": "Debe ser Pendiente, Aprobada o Rechazada.",
                     },
                     status=400,
                 )
 
             solicitud.estado = nuevo_estado
-
             solicitud.fecha_aprobacion = timezone.now().date()
             solicitud.save()
+
+            # Registrar auditoría de cambio de estado de solicitud
+            registrar_estado_solicitud(request, request.user, solicitud)
 
             return Response(
                 {
@@ -203,10 +228,11 @@ def solicitud_element(request, pk):
                 },
                 status=200,
             )
+
         except Exception as e:
             return Response(
                 {
-                    "mensaje": "Error al modificar el estado de la solicitud",
+                    "mensaje": "Error al modificar el estado",
                     "detalles": str(e),
                 },
                 status=500,
