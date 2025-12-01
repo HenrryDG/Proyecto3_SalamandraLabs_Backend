@@ -10,6 +10,9 @@ from rest_framework import status
 from datetime import datetime, time
 from rest_framework.test import APIRequestFactory
 from datetime import datetime, time
+from apps.auditoria.models import Auditoria
+from apps.auditoria.utils import  registrar_login, registrar_logout
+
 
 @extend_schema(
     methods=["POST"],
@@ -23,12 +26,12 @@ def empleado_login(request):
 
     # --- Validación del horario ---
     hora_inicio = time(8, 0)
-    hora_fin = time(16, 15)
+    hora_fin = time(23, 59)
     hora_actual = datetime.now().time()
 
     if not (hora_inicio <= hora_actual <= hora_fin):
         return Response({
-            "mensaje": "Solo puedes iniciar sesión entre las 08:00 a.m. y 16:15 p.m."
+            "mensaje": "Solo puedes iniciar sesión entre las 08:00 a.m. y 23:59 p.m."
         }, status=status.HTTP_403_FORBIDDEN)
 
     # --- Verificación de usuario y empleado ---
@@ -47,6 +50,9 @@ def empleado_login(request):
         return Response({
             "mensaje": "Empleado inactivo. Contacte al administrador."
         }, status=status.HTTP_403_FORBIDDEN)
+    
+    # --- Registrar auditoría ---
+    registrar_login(request, user, empleado)    
 
     # --- RECONSTRUIR EL REQUEST PARA JWT (soluciona RawPostDataException) ---
     factory = APIRequestFactory()
