@@ -5,6 +5,7 @@ from .models import Cliente
 from .serializers import ClienteSerializer
 from drf_spectacular.utils import extend_schema
 from django.db.models import Q
+from apps.auditoria.utils import registrar_creacion_cliente, registrar_actualizacion_cliente, registrar_estado_cliente
 
 
 
@@ -53,6 +54,10 @@ def cliente_collection(request):
         if serializer.is_valid():
             try:
                 cliente = serializer.save()
+
+                # Registrar auditoría de creación de cliente
+                registrar_creacion_cliente(request, request.user, cliente)
+
                 return Response(serializer.data, status=201)
             except Exception as e:
                 return Response({
@@ -122,7 +127,14 @@ def cliente_element(request, pk):
         serializer = ClienteSerializer(cliente, data=request.data, partial=True)
         if serializer.is_valid():
             try:
-                serializer.save()
+                # Guardar los valores antiguos antes de guardar cambios
+                datos_anteriores = {campo: getattr(cliente, campo) for campo in serializer.validated_data.keys()}
+
+                cliente_actualizado = serializer.save()
+
+                # Registrar auditoría de actualización de cliente
+                registrar_actualizacion_cliente(request, request.user, cliente_actualizado, datos_anteriores, serializer.validated_data)
+
                 return Response(serializer.data, status=200)
             except Exception as e:
                 return Response({
@@ -133,6 +145,8 @@ def cliente_element(request, pk):
             'mensaje': 'Error en los datos proporcionados para actualizar',
             'errores': serializer.errors
         }, status=400)
+
+
     
     # Realizar soft delete del cliente
     elif request.method == 'DELETE':
@@ -157,6 +171,9 @@ def cliente_element(request, pk):
             cliente.save()
 
             mensaje = "Cliente deshabilitado exitosamente" if not cliente.activo else "Cliente habilitado exitosamente"
+            
+            # Registrar auditoría de cambio de estado del cliente
+            registrar_estado_cliente(request, request.user, cliente)
 
             return Response({
                 "mensaje": mensaje,
