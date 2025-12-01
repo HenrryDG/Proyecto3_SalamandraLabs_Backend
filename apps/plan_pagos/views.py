@@ -8,6 +8,7 @@ from django.db.models import Q
 from .models import PlanPago
 from .serializers import PlanPagoSerializer
 from .utils import actualizar_cuotas_vencidas
+from apps.auditoria.utils import registrar_actualizacion_plan_pago
 
 
 @extend_schema(responses={200: PlanPagoSerializer(many=True)})
@@ -42,17 +43,38 @@ def actualizar_plan_pago(request, plan_id: int):
     except PlanPago.DoesNotExist:
         return Response({"mensaje": "Plan de pago no encontrado"}, status=404)
 
+    # Guardar datos antiguos para auditoría
+    datos_viejos = {
+        "estado": plan.estado,
+        "metodo_pago": plan.metodo_pago,
+        "fecha_pago": plan.fecha_pago,
+        "fecha_vencimiento": plan.fecha_vencimiento,
+        "monto_cuota": plan.monto_cuota,
+        "mora_cuota": plan.mora_cuota,
+    }
+
     serializer = PlanPagoSerializer(plan, data=request.data, partial=True)
     if serializer.is_valid():
         try:
-            serializer.save()
+            plan_actualizado = serializer.save()
+
+            # Datos nuevos para auditoría
+            datos_nuevos = serializer.validated_data.copy()
+
+            # Llamar a la función de auditoría
+            registrar_actualizacion_plan_pago(request, request.user, plan_actualizado, datos_viejos, datos_nuevos)
+
             return Response(serializer.data, status=200)
         except Exception as e:
             return Response(
                 {"mensaje": "Error al actualizar el plan de pago", "error": str(e)},
                 status=500,
             )
-
+    else:
+        return Response(
+            {"mensaje": "Datos inválidos", "errores": serializer.errors},
+            status=400,
+        )
 
 @api_view(["GET"])
 @permission_classes([IsAuthenticated])

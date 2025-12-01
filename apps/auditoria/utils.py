@@ -240,4 +240,28 @@ def registrar_eliminacion_solicitud(request, user, solicitud):
     )
 
 
+####################################################################
+################## AUDITORIA DE PRÉSTAMOS ##########################
+####################################################################
+
+def registrar_actualizacion_plan_pago(request, user, plan_pago, datos_viejos, datos_nuevos):
+    """Auditoría para cambios en la cuota del préstamo (método de pago, estado, fecha, etc.)."""
+    
+    cliente = plan_pago.prestamo.solicitud.cliente
+    # Calcular número de cuota usando IDs para evitar error de objetos distintos
+    plan_pagos_ordenados = plan_pago.prestamo.plan_pagos.order_by('fecha_vencimiento').values_list('id', flat=True)
+    numero_cuota = list(plan_pagos_ordenados).index(plan_pago.id) + 1
+
+    for campo, valor_nuevo in datos_nuevos.items():
+        valor_viejo = datos_viejos.get(campo)
+        if valor_viejo != valor_nuevo:
+            descripcion = f"El usuario {user.username} actualizó el campo {campo} de la cuota {numero_cuota} del préstamo ID {plan_pago.prestamo.id} del cliente {plan_pago.prestamo.solicitud.cliente.nombre} {plan_pago.prestamo.solicitud.cliente.apellido_paterno or ''} {plan_pago.prestamo.solicitud.cliente.apellido_materno or ''} pasando de '{valor_viejo}' a '{valor_nuevo}'."
+
+            Auditoria.objects.create(
+                usuario=user,
+                accion="ACTUALIZAR",
+                tabla="plan_pagos",
+                descripcion=descripcion,
+                ip=get_client_ip(request),
+            )
 
