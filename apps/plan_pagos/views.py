@@ -9,6 +9,8 @@ from .models import PlanPago
 from .serializers import PlanPagoSerializer
 from .utils import actualizar_cuotas_vencidas
 from apps.auditoria.utils import registrar_actualizacion_plan_pago
+from apps.notificaciones.services import notificacion_service
+from apps.notificaciones.types import TipoNotificacion
 
 
 @extend_schema(responses={200: PlanPagoSerializer(many=True)})
@@ -64,7 +66,23 @@ def actualizar_plan_pago(request, plan_id: int):
             # Llamar a la función de auditoría
             registrar_actualizacion_plan_pago(request, request.user, plan_actualizado, datos_viejos, datos_nuevos)
 
-            return Response(serializer.data, status=200)
+            response_data = serializer.data
+
+            # Enviar notificación push
+            if datos_viejos.get("estado") != "Pagada" and plan_actualizado.estado == "Pagada":
+                # Generar notificaciones 
+                notificaciones = notificacion_service.generar_notificaciones_cuota(plan_actualizado)
+                
+                # Buscar la notificación 
+                notificacion_pago = next(
+                    (n for n in notificaciones if n.tipo == TipoNotificacion.PAGO_COMPLETADO), 
+                    None
+                )
+                
+                if notificacion_pago:
+                    response_data["notificacion_push"] = notificacion_pago.to_dict()
+
+            return Response(response_data, status=200)
         except Exception as e:
             return Response(
                 {"mensaje": "Error al actualizar el plan de pago", "error": str(e)},
