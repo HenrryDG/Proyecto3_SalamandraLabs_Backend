@@ -16,6 +16,8 @@ from drf_spectacular.utils import extend_schema
 from django.utils import timezone
 from ..documentos.utils import limpiar_texto, extraer_direccion_ocr
 from apps.auditoria.utils import registrar_creacion_solicitud, registrar_actualizacion_solicitud, registrar_estado_solicitud, registrar_eliminacion_solicitud
+from apps.notificaciones.services import notificacion_service
+from apps.notificaciones.types import TipoNotificacion
 
 
 @extend_schema(
@@ -60,9 +62,20 @@ def solicitud_collection(request):
                 
                 # Registrar auditoría de creación de solicitud
                 registrar_creacion_solicitud(request, request.user, solicitud)
-            
+                
+                response_data = serializer.data
+                
+                # Generar notificación de nueva solicitud
+                notificaciones = notificacion_service.generar_notificaciones_solicitud(solicitud)
+                notificacion_nueva = next(
+                    (n for n in notificaciones if n.tipo == TipoNotificacion.NUEVA_SOLICITUD), 
+                    None
+                )
+                
+                if notificacion_nueva:
+                    response_data["notificacion_push"] = notificacion_nueva.to_dict()
 
-                return Response(serializer.data, status=201)
+                return Response(response_data, status=201)
             else:
                 return Response(
                     {
@@ -219,15 +232,31 @@ def solicitud_element(request, pk):
             # Registrar auditoría de cambio de estado de solicitud
             registrar_estado_solicitud(request, request.user, solicitud)
 
-            return Response(
-                {
-                    "mensaje": f"Solicitud actualizada a estado '{nuevo_estado}'",
-                    "solicitud_id": pk,
-                    "estado": solicitud.estado,
-                    "fecha_aprobacion": solicitud.fecha_aprobacion,
-                },
-                status=200,
-            )
+            response_data = {
+                "mensaje": f"Solicitud actualizada a estado '{nuevo_estado}'",
+                "solicitud_id": pk,
+                "estado": solicitud.estado,
+                "fecha_aprobacion": solicitud.fecha_aprobacion,
+            }
+
+            # Generar notificaciones por cambio de estado
+            notificaciones = notificacion_service.generar_notificaciones_solicitud(solicitud)
+            
+            tipo_esperado = None
+            if nuevo_estado == "Aprobada":
+                tipo_esperado = TipoNotificacion.SOLICITUD_APROBADA
+            elif nuevo_estado == "Rechazada":
+                tipo_esperado = TipoNotificacion.SOLICITUD_RECHAZADA
+            
+            if tipo_esperado:
+                notificacion_estado = next(
+                    (n for n in notificaciones if n.tipo == tipo_esperado), 
+                    None
+                )
+                if notificacion_estado:
+                    response_data["notificacion_push"] = notificacion_estado.to_dict()
+
+            return Response(response_data, status=200)
 
         except Exception as e:
             return Response(
