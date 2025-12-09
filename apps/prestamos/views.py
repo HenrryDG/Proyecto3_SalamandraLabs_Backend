@@ -11,6 +11,8 @@ from .models import Prestamo
 from .serializers import PrestamoSerializer
 from apps.clientes.models import Cliente
 from drf_spectacular.utils import extend_schema
+from apps.notificaciones.services import notificacion_service
+from apps.notificaciones.types import TipoNotificacion
 
 
 @extend_schema(
@@ -81,7 +83,22 @@ def prestamo_collection(request):
         if serializer.is_valid():
             try:
                 prestamo = serializer.save()
-                return Response(serializer.data, status=201)
+                
+                response_data = serializer.data
+                
+                # Generar notificaciones de préstamo
+                notificaciones = notificacion_service.generar_notificaciones_prestamo(prestamo)
+                
+                # Buscar notificación de desembolso/activo
+                notificacion_prestamo = next(
+                    (n for n in notificaciones if n.tipo == TipoNotificacion.PRESTAMO_DESEMBOLSADO), 
+                    None
+                )
+                
+                if notificacion_prestamo:
+                    response_data["notificacion_push"] = notificacion_prestamo.to_dict()
+                
+                return Response(response_data, status=201)
             except Exception as e:
                 return Response({
                     "mensaje": "Error al crear el préstamo", 
